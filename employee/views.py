@@ -109,7 +109,7 @@ def employee_with_id(request,pk):
 			timestamp_milliseconds = int(timestamp_seconds * 1000)
 			print(timestamp_milliseconds)
 			print("timestamp_mili seconds : ",timestamp_milliseconds)
-			get_employee_data(serializer.data)
+			# get_employee_data(serializer.data)
 
 
 			# serializer.data["UniqueCardNumber"]=int(timestamp_milliseconds)

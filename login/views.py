@@ -17,7 +17,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 import jwt
 from django.contrib.auth.hashers import make_password, check_password
-
+from .models import LogInLog
 
 
 @api_view(['POST'])
@@ -74,6 +74,12 @@ def login_user(request):
                 #     print(f"Encoded Signature: {e.signature}")
                 #     print(f"Expected Signature: {e.expected_signature}")
                 # # print(decoded_token)
+                employee=Employee.objects.get(employee_id=employee_id)
+                username=Employee.objects.filter(employee_id=employee_id).values_list("username",flat=True)
+                
+                log_insert=LogInLog(employee_id=employee,username=username)
+                log_insert.save()
+                
 
                 serializer = EmployeeSerializer(user)
                 return JsonResponse(

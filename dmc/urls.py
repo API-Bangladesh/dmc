@@ -16,7 +16,8 @@ urlpatterns = [
     path('empgrpdev/',include('empgrpdev.urls')),
     path('grpdev/',include('grpdev.urls')),
     path('login/',include('login.urls')),
-    path('log/',include('log.urls'))
+    path('log/',include('log.urls')),
+    path('forget_password/',include('forget_password.urls')),
 
 ]
 if settings.DEBUG:

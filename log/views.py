@@ -84,8 +84,6 @@ def log(request):
 
 
 
-
-
 # @api_view(['GET','DELETE'])
 # @authentication_classes([JWTAuthentication])
 # @permission_classes([IsAuthenticated])

@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-%a@0fn276$a5mhi3jq+)au@+*#^)f5l5dyzur6ng+%1^y8w@=m
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'log',
     'structuedlog',
+    'forget_password',
 
 ]
 
@@ -134,14 +135,17 @@ AUTH_PASSWORD_VALIDATORS = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        # 'auth.auth.CustomJWTAuthentication',
 
     ),
 }
+
 
 ##austom allowed origins are here
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # Example: React development server
     # "https://yourfrontenddomain.com",
+
 ]
  
 
@@ -182,7 +186,7 @@ PASSWORD_HASHERS = [
     # ... other hashers ...
 ]
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=2),
     'USER_ID_FIELD': 'employee_id',
 }
 
@@ -190,3 +194,15 @@ SIMPLE_JWT = {
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+###email settings
+
+# settings.py
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'rezvialauddin@gmail.com'
+EMAIL_HOST_PASSWORD = 'qciw gtqi ciss vlso'
+# DEFAULT_FROM_EMAIL = 'rezvialauddin@gmail.com'
