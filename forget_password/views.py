@@ -1,6 +1,7 @@
 import base64
 from datetime import datetime, timedelta
 import secrets
+from django.forms import ValidationError
 import pytz
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -11,7 +12,7 @@ from employee.serializers import EmployeeSerializer
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils import timezone
-
+from django.contrib.auth.hashers import make_password
 
 @api_view(['POST'])
 def email_sending(request):
@@ -19,10 +20,13 @@ def email_sending(request):
         find=Employee.objects.filter(email=request.data["email"]).first()
         if find !=None:
             employee=Employee.objects.get(email=request.data["email"])
-            random_string = secrets.token_hex(3)
+            random_string_1 = secrets.token_hex(3)
+            random_string_2 = secrets.token_hex(3)
+            random_string_3 = secrets.token_hex(3)
+            random_string_4 = secrets.token_hex(3)
             serializer=EmployeeSerializer(employee)
             # Combine the user information JSON and the random string
-            combined_data = random_string+"###"+ str(serializer.data)+"###"+ random_string
+            combined_data = random_string_1+"###"+ str(serializer.data['employee_id'])+str(serializer.data['password'])+random_string_4+str(serializer.data['cardNo'])+random_string_2+str(serializer.data['email'])+"###"+ random_string_3
             
             # Encode the combined data as bytes and then encode it to base64
             base64_encoded_combined_data = base64.b64encode(combined_data.encode()).decode()
@@ -62,12 +66,63 @@ def email_sending(request):
                 expiration_date=expire_dt,
             )
             data.save()
-            return Response({"message":"email sent"})
+            return Response({"message":"email sent","data":base64_encoded_combined_data})
         else:
             return Response({"message":"email not varified"})
     elif 'password' in request.data:
+        password=request.data['password']
         if 'token' in request.headers:
             print("headers :",request.headers)
+            token=request.headers['Token']
+            exist=ForgetPassword.objects.filter(token=token).first()
+            if exist!=None :
+                print("exist :",exist)
+                delele_data=ForgetPassword.objects.filter(token=token).first()
+                expire_date=ForgetPassword.objects.filter(token=token).values_list("expiration_date","employee_id",flat=False)
+                print("employee id :",expire_date[0][1])
+                delele_data=ForgetPassword.objects.filter(employee_id=expire_date[0][1])
+                dt = datetime.now()
+                tmp = dt.timestamp()
+                utc_dat = datetime.utcfromtimestamp(tmp)
+                desired_tz = pytz.timezone('Asia/Dhaka')
+                curr_dt = utc_dat.astimezone(desired_tz)
+                if curr_dt>expire_date[0][0]:
+                    print("curr_dt : ",curr_dt,"\nexpire_date",expire_date[0][0].replace(tzinfo=timezone.utc))
+                    delele_data.delete()
+
+                    return Response({"message": "Token expired"})
+                else:
+                    print("curr_dt : ",curr_dt,"\nexpire_date",expire_date[0][0].replace(tzinfo=timezone.utc))
+                    try:
+
+                        emp=Employee.objects.get(employee_id=expire_date[0][1])
+                        passw=request.data["password"]
+                        hashed=make_password(passw)
+                        request.data["password"]=hashed
+
+                        empserializer=EmployeeSerializer(instance=emp,data= request.data, partial=True)
+                        # print("empserializer data : ",empserializer.data)
+                        if empserializer.is_valid():
+                            # empserializer.data['password']=password
+                            empserializer.save()
+                            print("data",empserializer.data)
+                            return Response({"message": "Password Changed successfully !!!","data":empserializer.data})
+                    except Employee.DoesNotExist:
+                        # Handle the case where no Employee with the given employee_id is found
+                        print("Employee not found.")
+                    except ValidationError as e:
+                        # Handle validation errors if any occur
+                        print("Validation error:", e)      
+                        
+                    return Response({"message": "Password Changed unsuccessfully !!!","data":empserializer.data})
+            else:
+                print("exist :",exist)
+                return Response({"message": "Token is not valid"})
+
+
+
+
+            return Response({"token": request.headers['Token']})
 
 
     else:

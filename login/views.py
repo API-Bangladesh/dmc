@@ -37,19 +37,14 @@ def login_user(request):
             hashed_password = make_password(password)
 
             user = authenticate(request,employee_id=employee_id, password=password)
-            # user = Employee.objects.get(employee_id=employee_id)
-            print("user.password :",user.password,", pasword : ",hashed_password)
-            # if check_password(password, user.password):
-            #     print("Password is correct.")
-            # else:
-            #     print("Password is incorrect.")
-            
-            # print("user flag :",user)
-            expiration_time = datetime.utcnow() + timedelta(hours=2)
-            expiration_time_gmt6 = expiration_time.replace(tzinfo=timezone.utc).astimezone(timezone(timedelta(hours=6)))
 
-            exp_timestamp = int(expiration_time_gmt6.timestamp())
             if user is not None:
+                print("user.password :",user.password,", pasword : ",hashed_password)
+
+                expiration_time = datetime.utcnow() + timedelta(hours=2)
+                expiration_time_gmt6 = expiration_time.replace(tzinfo=timezone.utc).astimezone(timezone(timedelta(hours=6)))
+
+                exp_timestamp = int(expiration_time_gmt6.timestamp())
                 body={
                     'id':employee_id,
                     'sub': "3346363",

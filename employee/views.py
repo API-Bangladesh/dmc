@@ -98,7 +98,11 @@ def employee_with_id(request,pk):
 	if task!=None:
 		if request.method == 'GET' :
 			serializer = EmployeeSerializer(task, many=False)
+			# hashed=make_password("1234") 
+			# # if hashed == serializer.data["password"]:
+			# print("hashed :",hashed,"password is : 1234")
 					# Input string
+
 			timestamp_str = serializer.data["UniqueCardNumber"]
 
 			# Convert string to datetime object

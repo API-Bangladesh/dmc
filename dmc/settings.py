@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'log',
     'structuedlog',
     'forget_password',
+    'attendance_report',
 
 ]
 
@@ -143,8 +144,10 @@ REST_FRAMEWORK = {
 
 ##austom allowed origins are here
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # Example: React development server
+    "http://10.10.23:89:3000",  # Example: React development server
+    "http://localhost:3000",
     # "https://yourfrontenddomain.com",
+    'http://*',
 
 ]
  

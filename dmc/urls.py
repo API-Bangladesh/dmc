@@ -18,6 +18,7 @@ urlpatterns = [
     path('login/',include('login.urls')),
     path('log/',include('log.urls')),
     path('forget_password/',include('forget_password.urls')),
+    path('attendance_log/',include('attendance_report.urls')),
 
 ]
 if settings.DEBUG:

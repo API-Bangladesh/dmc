@@ -13,6 +13,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 import requests
+from attendance_report.views import insert_attendance_log
 
 from employee.models import Employee
 from .serializers import LogSerializer
@@ -192,47 +193,52 @@ def get_data_by_ip(did,start,end):
                 gmt6_datetime = utc_datetime.astimezone(gmt6_timezone)
                 
                 if employee_id !='\r':
-                    employee=Employee.objects.get(employee_id=str(employee_id.rstrip('\r')))
-                    # device_id=Device.objects.filter(device_ip=ip).values_list("device_id",flat=True)
-                    info={
-                        "device_id":did,
-                        "CardName":CardName.rstrip('\r'),
-                        "InTime":gmt6_datetime,
-                        "RecNo":int(RecNo.rstrip('\r')),
-                        "RoomNumber":RoomNumber.rstrip('\r'),
-                        "Status":int(Status.rstrip('\r')),
-                        "Type":Type.rstrip('\r'),
-                        "image_url":image_url.rstrip('\r'),
-                        "employee_id":employee_id.rstrip('\r')
+                    exist=employee=Employee.objects.filter(employee_id=str(employee_id.rstrip('\r'))).first()
+                    if exist!=None:
+                        employee=Employee.objects.get(employee_id=str(employee_id.rstrip('\r')))
+                        # device_id=Device.objects.filter(device_ip=ip).values_list("device_id",flat=True)
+                        info={
+                            "device_id":did,
+                            "CardName":CardName.rstrip('\r'),
+                            "InTime":gmt6_datetime,
+                            "RecNo":int(RecNo.rstrip('\r')),
+                            "RoomNumber":RoomNumber.rstrip('\r'),
+                            "Status":int(Status.rstrip('\r')),
+                            "Type":Type.rstrip('\r'),
+                            "image_url":image_url.rstrip('\r'),
+                            "employee_id":employee_id.rstrip('\r')
 
-                        }
-                    check_record_number=Log.objects.filter(RecNo=int(RecNo.rstrip('\r'))).values_list("RecNo",flat=False)
-                    print("record number :",check_record_number.count())
-                    if check_record_number.count()==0:
-                        # gmt6_timezone = pytz.timezone("GMT+6")
-                        # in_time_gmt6 = datetime(2023, 11, 26, 11, 41, 20, tzinfo=gmt6_timezone)
-                        print("log InTime :",gmt6_datetime.replace(tzinfo=timezone.utc))
-                        ins=Log(
-                            device_id=devi,
-                            CardName=CardName.rstrip('\r'),
-                            InTime=gmt6_datetime.replace(tzinfo=timezone.utc),
-                            RecNo=int(RecNo.rstrip('\r')),
-                            RoomNumber=RoomNumber.rstrip('\r'),
-                            Status=int(Status.rstrip('\r')),
-                            Type=Type.rstrip('\r'),
-                            image_url=image_url.rstrip('\r'),
-                            employee_id=employee
-                            )
-                        
-                        ins.save()
-                        print("saved")
-                        insert_structed_log(device_id=devi,employee_id=employee,username=CardName,InTime=gmt6_datetime.replace(tzinfo=timezone.utc))
-    
-                    else:
-                        # insert_structed_log(device_id=devi,employee_id=employee,username=CardName,InTime=gmt6_datetime.replace(tzinfo=timezone.utc))
+                            }
+                        check_record_number=Log.objects.filter(RecNo=int(RecNo.rstrip('\r'))).values_list("RecNo",flat=False)
+                        print("record number :",check_record_number.count())
+                        if check_record_number.count()==0:
+                            # gmt6_timezone = pytz.timezone("GMT+6")
+                            # in_time_gmt6 = datetime(2023, 11, 26, 11, 41, 20, tzinfo=gmt6_timezone)
+                            print("log InTime :",gmt6_datetime.replace(tzinfo=timezone.utc))
+                            ins=Log(
+                                device_id=devi,
+                                CardName=CardName.rstrip('\r'),
+                                InTime=gmt6_datetime.replace(tzinfo=timezone.utc),
+                                RecNo=int(RecNo.rstrip('\r')),
+                                RoomNumber=RoomNumber.rstrip('\r'),
+                                Status=int(Status.rstrip('\r')),
+                                Type=Type.rstrip('\r'),
+                                image_url=image_url.rstrip('\r'),
+                                employee_id=employee
+                                )
+                            
+                            ins.save()
+                            print("saved")
+                            insert_structed_log(device_id=devi,employee_id=employee,username=CardName,InTime=gmt6_datetime.replace(tzinfo=timezone.utc))
+                            insert_attendance_log(device_id=devi,employee_id=employee,username=CardName,InTime=gmt6_datetime.replace(tzinfo=timezone.utc))
+        
+                        else:
+                            # insert_attendance_log(device_id=devi,employee_id=employee,username=CardName,InTime=gmt6_datetime.replace(tzinfo=timezone.utc))
 
-                        print("data already synced")
-                    datas.append(info)
+                            # insert_structed_log(device_id=devi,employee_id=employee,username=CardName,InTime=gmt6_datetime.replace(tzinfo=timezone.utc))
+
+                            print("data already synced")
+                        datas.append(info)
 
             return datas
 
