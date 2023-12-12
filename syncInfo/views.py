@@ -4,7 +4,22 @@ import pytz
 from rest_framework.response import Response
 from .models import SyncInfoTable
 from django.utils import timezone
+from rest_framework.decorators import api_view,authentication_classes,permission_classes
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from .serializers import SyncInfoTableSerializer
 # Create your views here.
+
+@api_view(["GET"])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def sync_info(request):
+    data=SyncInfoTable.objects.all().order_by("-id")
+    serializer=SyncInfoTableSerializer(data,many=True)
+    return Response({"data":serializer.data})
+
+
 def syncInfo(gmt6_datetime,employee_id):
     print("employee_id :",employee_id,"sync time :",gmt6_datetime)
     # timezone = pytz.timezone('Asia/Dhaka')

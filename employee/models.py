@@ -54,8 +54,9 @@ class Employee(AbstractUser):
     password = models.CharField(max_length=100, null=True, default='-')
     phone_number = models.CharField(max_length=100, null=True, default='-')
     image_location = models.CharField(max_length=100, null=True,default='-')
-    in_time = models.TimeField(null=False, default='08:00:00')
-    out_time = models.TimeField(null=False, default='17:00:00')
+    # in_time = models.TimeField(null=False, default='08:00:00')
+    # out_time = models.TimeField(null=False, default='17:00:00')
+    shift_id=models.ForeignKey("shift_management.ShiftManagement",on_delete=models.CASCADE,default=1,null=False)
     registration_date = models.DateField(null=True,auto_now_add=True)
     validity_date = models.CharField(max_length=100, null=True, default=get_default_date)
     employee_type = models.CharField(max_length=100, null=True, default='user')
@@ -90,6 +91,7 @@ class Employee(AbstractUser):
     cardNo= models.BigIntegerField(default=get_timestamp)
     department=models.ForeignKey("department.Department",on_delete=models.SET_NULL,null=True)
     designation=models.ForeignKey("designation.Designation",on_delete=models.SET_NULL,null=True)
+
 
 
 

@@ -20,6 +20,7 @@ urlpatterns = [
     path('forget_password/',include('forget_password.urls')),
     path('attendance_log/',include('attendance_report.urls')),
     path('sync_info/',include('syncInfo.urls')),
+    path('shift/',include('shift_management.urls')),
 
 ]
 if settings.DEBUG:

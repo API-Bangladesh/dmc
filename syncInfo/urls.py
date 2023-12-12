@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import syncInfo
+from .views import syncInfo,sync_info
 urlpatterns=[
-    path("",syncInfo,name="syncinfo")
+    path("",sync_info,name="syncinfo")
 ]

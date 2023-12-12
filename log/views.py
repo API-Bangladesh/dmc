@@ -26,6 +26,8 @@ from device.serializers import DeviceSerializer
 import ipaddress
 from structuedlog.views import insert_structed_log
 from login.models import LogInLog
+from syncInfo.models import SyncInfoTable
+from syncInfo.serializers import SyncInfoTableSerializer 
 
 @api_view(['GET','POST'])
 @authentication_classes([JWTAuthentication])
@@ -40,11 +42,32 @@ def log(request):
         employee_id_found=LogInLog.objects.filter(token=str(logintoken)).values_list("employee_id",flat=True)
         print("login token :",logintoken)
         print("loged in employee :",employee_id_found[0])
-        
+        last_sync_time=SyncInfoTable.objects.all().order_by("-id")[:1]
+        last_sync_time_serializer=SyncInfoTableSerializer(last_sync_time,many=True)
+
+        print("last sync info :",last_sync_time_serializer.data[0]['syncTime'])
+        dt=last_sync_time_serializer.data[0]['syncTime']
+        stime = datetime.strptime(dt, "%Y-%m-%d %H:%M:%S") - timedelta(hours=6)
+        # stime = datetime.strptime(stime, "%Y-%m-%d %H:%M:%S")
+
+        # Specify the original time zone (assuming it's Dhaka)
+        original_timezone = pytz.timezone('Asia/Dhaka')
+
+        # Localize the datetime object to the original time zone
+        stime = original_timezone.localize(stime)
+
+        # Convert to UTC
+        stime_utc = stime.astimezone(pytz.utc)
+
+        # Convert datetime to timestamp
+        tstamp = stime_utc.timestamp()
+        print("last sync time :",tstamp)
 
         
-        start=request.data["start"]
-        end=request.data["end"]
+        start=int(tstamp)
+        current_dt=datetime.now(original_timezone)
+
+        end=current_dt.timestamp()
         # device=Device.objects.none()
 
 
@@ -76,6 +99,9 @@ def log(request):
         if 'device_id' in request.data:
 
             id = request.data["device_id"]
+            for i in id:
+                print("device id :",i)
+
             print("device_id :",id," start : ",start,"end : ",end)
             for did in device_id:
                   if did[0]==id and did[1]=="active":
