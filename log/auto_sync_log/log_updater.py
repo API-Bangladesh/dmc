@@ -5,7 +5,7 @@ from log.views import auto_save
 scheduler_running = False
 def start():
     scheduler = BackgroundScheduler()
-    scheduler.add_job(auto_save,"interval", minutes=1,id="log_002",replace_existing=True)
+    scheduler.add_job(auto_save,"interval", minutes=60,id="log_002",replace_existing=True)
 
     scheduler.start()
     global scheduler_running

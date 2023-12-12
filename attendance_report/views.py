@@ -17,6 +17,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
 
 
 # Create your views here.
@@ -54,8 +55,17 @@ def insert_attendance_log(device_id,employee_id,username,InTime):
 def attendanceReport(request):
 	if request.method == 'GET':
 		tasks = AttendanceReport.objects.all().order_by('-ID')
-		serializer = AttendanceSerializer(tasks, many=True)
-		return Response(serializer.data)
+		# serializer = AttendanceSerializer(tasks, many=True)
+		paginator = PageNumberPagination()
+		# paginator.page_size = 10  # Set the number of items per page
+		paginator.page_size = int(request.GET.get('page_size', 10))
+
+		result_page = paginator.paginate_queryset(tasks, request)
+
+		serializer = AttendanceSerializer(result_page, many=True)
+
+		return paginator.get_paginated_response(serializer.data)
+		# return Response(serializer.data)
 	if request.method == 'POST':
 		print("Request Data:", request.data)
 		serializer = AttendanceSerializer(data=request.data)

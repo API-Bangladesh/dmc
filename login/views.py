@@ -71,8 +71,9 @@ def login_user(request):
                 # # print(decoded_token)
                 employee=Employee.objects.get(employee_id=employee_id)
                 username=Employee.objects.filter(employee_id=employee_id).values_list("username",flat=True)
+                final_token=str(refresh.access_token)
                 
-                log_insert=LogInLog(employee_id=employee,username=username)
+                log_insert=LogInLog(employee_id=employee,username=username,token=final_token)
                 log_insert.save()
                 
 
@@ -81,7 +82,7 @@ def login_user(request):
                         {
                         
                         'refresh':str(refresh),
-                        'access':str(refresh.access_token) ,
+                        'access':final_token,
                         'user': serializer.data,
                         }
                 )

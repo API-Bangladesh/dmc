@@ -88,6 +88,9 @@ class Employee(AbstractUser):
     )
     UniqueCardNumber=models.DateTimeField(null=False,default=datetime(2023, 1, 1, tzinfo=timezone.utc))
     cardNo= models.BigIntegerField(default=get_timestamp)
+    department=models.ForeignKey("department.Department",on_delete=models.SET_NULL,null=True)
+    designation=models.ForeignKey("designation.Designation",on_delete=models.SET_NULL,null=True)
+
 
 
 

@@ -13,3 +13,4 @@ class Log(models.Model):
 	image_url=models.CharField(max_length=100,default="-",null=True)
 	employee_id=models.ForeignKey("employee.Employee",on_delete=models.CASCADE,null=True)
 
+

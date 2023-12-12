@@ -25,7 +25,7 @@ from django.utils import timezone
 import re
 from urllib.parse import unquote
 from PIL import Image
-
+from rest_framework.pagination import PageNumberPagination
 # Create your views here.
 
 @api_view(['GET','POST'])
@@ -38,9 +38,19 @@ def employee(request):
 		serializer = EmployeeSerializer(tasks, many=True)
 		unique_field = int(timezone.now().timestamp() * 1000)  # Using milliseconds
 		print("unique_field :",unique_field)
+		# Apply pagination
+		paginator = PageNumberPagination()
+		# paginator.page_size = 10  # Set the number of items per page
+		paginator.page_size = int(request.GET.get('page_size', 10))
+
+		result_page = paginator.paginate_queryset(tasks, request)
+
+		serializer = EmployeeSerializer(result_page, many=True)
+
+		return paginator.get_paginated_response(serializer.data)
 
 
-		return Response(serializer.data)
+		# return Response(serializer.data)
 	if request.method == 'POST' and request.data["group_id"]!=None:
 		print("Request Data:", request.data)
 		serializer = EmployeeSerializer(data=request.data)
@@ -495,3 +505,17 @@ def resize_image(input_path,output_path,max_size_kb):
         print("compressing ...")
 
 
+def pagination():
+			if "&" in id:
+				flag=1
+				print("id :",id)
+				pageNo=id.split('&')[0]
+				dataNo=id.split('&')[1]
+				print("pageNo :",pageNo,"dataNo :",dataNo)
+				pageCount=pageNo.split('=')[1]
+				dataCount=dataNo.split('=')[1]
+				print("pageCount :",pageCount,"dataCount :",dataCount)
+				print("data from :",(int(pageCount)-1)*int(dataCount),"data to ",int(pageCount)*int(dataCount))
+			
+			rangeBegin=(int(pageCount)-1)*int(dataCount)
+			rangeEnd=int(pageCount)*int(dataCount)

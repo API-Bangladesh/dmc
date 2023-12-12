@@ -14,6 +14,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 import requests
 from attendance_report.views import insert_attendance_log
+from syncInfo.views import syncInfo
 
 from employee.models import Employee
 from .serializers import LogSerializer
@@ -24,6 +25,7 @@ from device.models import Device
 from device.serializers import DeviceSerializer
 import ipaddress
 from structuedlog.views import insert_structed_log
+from login.models import LogInLog
 
 @api_view(['GET','POST'])
 @authentication_classes([JWTAuthentication])
@@ -32,6 +34,14 @@ def log(request):
     # response = requests.post(add_image_url,json=data,auth=HTTPDigestAuth('admin','admin123'),headers={"Content-Type":"application/json"})
 
     if request.method=="POST":
+         
+        logintoken=request.headers['Authorization']
+        logintoken=logintoken.replace("Bearer ","")
+        employee_id_found=LogInLog.objects.filter(token=str(logintoken)).values_list("employee_id",flat=True)
+        print("login token :",logintoken)
+        print("loged in employee :",employee_id_found[0])
+        
+
         
         start=request.data["start"]
         end=request.data["end"]
@@ -71,14 +81,22 @@ def log(request):
                   if did[0]==id and did[1]=="active":
 
                     logs=get_data_by_ip(str(did[0]),start,end)
-                    log.append({id:logs})
+                    log.append({id:True})
         else:
              for id in device_id:
                   if id[1]=="active":
                     logs=get_data_by_ip(id[0],start,end)
-                    log.append({id[0]:logs})
+                    log.append({id[0]:True})
         # print("log :",log)
-        return Response({"log":log})
+        loged_employee=Employee.objects.get(employee_id=employee_id_found[0])
+        timezone = pytz.timezone('Asia/Dhaka')
+        current_datetime = datetime.now(timezone)
+        gmt6_datetime = current_datetime.astimezone(timezone)
+        print(current_datetime)
+
+        syncInfo(current_datetime,loged_employee)
+
+        return Response({"Sync Status":log})
 
 
 
