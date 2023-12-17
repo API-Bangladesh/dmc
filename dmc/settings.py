@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'designation',
     'empgrp',
     'device',
+    'devices',
     'role',
     'empfiles',
     'empgrpdev',
@@ -150,6 +151,7 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = [
     'http://10.10.23.89:3000',
     'http://10.10.23.68:3000',
+    "http://113.212.109.147:8000",
     'http://*',
 
 

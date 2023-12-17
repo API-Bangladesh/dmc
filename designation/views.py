@@ -49,6 +49,7 @@ def designation_with_id(request,pk):
             else:
                 return Response(desSerializer.error,status=status.HTTP_400_BAD_REQUEST)
         if request.method == 'DELETE':
+            print("delete designation :",designation)
             designation.delete()
             return Response({"message":"designation successfully deleted!"})
     else:

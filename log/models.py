@@ -3,7 +3,7 @@ from django.db import models
 # Create your models here.
 class Log(models.Model):
 	r_clsf_record_id=models.AutoField(primary_key=True)
-	device_id = models.ForeignKey("device.Device",on_delete=models.CASCADE)
+	device_id = models.ForeignKey("devices.Devices",on_delete=models.CASCADE)
 	CardName = models.CharField(max_length=100,default="-",null=True)
 	InTime=models.DateTimeField(null=True)
 	RecNo=models.IntegerField(default=0,null=True)

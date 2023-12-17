@@ -10,6 +10,8 @@ urlpatterns = [
     path('department/',include('department.urls')),
     path('designation/',include('designation.urls')),
     path('device/',include('device.urls')),
+    path('devices/',include('devices.urls')),
+
     path('empgrp/',include('empgrp.urls')),
     path('role/',include('role.urls')),
     path('empfiles/',include('empfiles.urls')),

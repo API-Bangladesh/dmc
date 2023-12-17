@@ -23,4 +23,5 @@ urlpatterns = [
     
 	path('', views.employee, name="employee"),
 	path('<str:pk>/', views.employee_with_id, name="employee_with_id"),
+    path('mis/<str:pk>/',views.get_employee_info_from_mis,name="employee_with_id")
 ]

@@ -51,6 +51,7 @@ def device_with_id(request,pk):
             else:
                 return Response(desSerializer.error,status=status.HTTP_400_BAD_REQUEST)
         if request.method == 'DELETE':
+            print("device delete :",dev)
             dev.delete()
             return Response({"message":"Device successfully deleted!"})
     else:

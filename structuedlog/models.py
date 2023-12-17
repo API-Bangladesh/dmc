@@ -3,7 +3,7 @@ from django.db import models
 # Create your models here.
 class StructuredLog(models.Model):
 	ID=models.AutoField(primary_key=True)
-	device_id = models.ForeignKey("device.Device",on_delete=models.CASCADE)
+	device_id = models.ForeignKey("devices.Devices",on_delete=models.CASCADE)
 	group_id=models.ForeignKey("empgrp.Group",on_delete=models.CASCADE)
 	employee_id=models.ForeignKey("employee.Employee",on_delete=models.CASCADE,null=True)
 	username = models.CharField(max_length=100,default="-",null=True)

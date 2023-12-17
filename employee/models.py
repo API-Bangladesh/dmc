@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 from django.utils import timezone
 
 from empgrp.models import Group
-from device.models import Device
+from devices.models import Devices
 from empgrp.models import Group
 from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.contrib.auth.hashers import make_password
@@ -111,7 +111,7 @@ class EmployeeGroupDevice(models.Model):
     id = models.AutoField(primary_key=True)
     employee_id = models.ForeignKey(Employee,on_delete=models.CASCADE,null=False)
     group_id = models.ForeignKey(Group,on_delete=models.CASCADE,null=False)
-    device_id = models.ForeignKey(Device,on_delete=models.CASCADE,null=False)
+    device_id = models.ForeignKey(Devices,on_delete=models.CASCADE,null=False)
     def __str__(self):
         return self.id
     

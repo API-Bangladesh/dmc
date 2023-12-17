@@ -9,4 +9,6 @@ class Device(models.Model):
     device_ip=models.GenericIPAddressField(protocol='both',unpack_ipv4=True,null=True)
     group_id=models.ForeignKey("empgrp.Group",on_delete=models.CASCADE,null=True)
     active_status=models.CharField(default="inactive",max_length=100,null=False)
+    def __str__(self):
+        return self.device_id
     

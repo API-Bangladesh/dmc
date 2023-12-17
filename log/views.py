@@ -21,8 +21,8 @@ from .serializers import LogSerializer
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 import re
 from .models import Log
-from device.models import Device
-from device.serializers import DeviceSerializer
+from devices.models import Devices
+from devices.serializers import DevicesSerializer
 import ipaddress
 from structuedlog.views import insert_structed_log
 from login.models import LogInLog
@@ -93,7 +93,7 @@ def log(request):
         # print("log :",log)
         # return Response({"log":log})
     ###id based searching
-        device_id=Device.objects.all().values_list("device_id","active_status",flat=False)
+        device_id=Devices.objects.all().values_list("device_id","active_status",flat=False)
         print("device ip:",device_id[0])
         log=[]
         if 'device_id' in request.data:
@@ -104,10 +104,11 @@ def log(request):
 
             print("device_id :",id," start : ",start,"end : ",end)
             for did in device_id:
-                  if did[0]==id and did[1]=="active":
+                  if did[0] in id and did[1]=="active":
+                    print("started syncking ...")
 
                     logs=get_data_by_ip(str(did[0]),start,end)
-                    log.append({id:True})
+                    log.append({did[0]:True})
         else:
              for id in device_id:
                   if id[1]=="active":
@@ -137,13 +138,13 @@ def log(request):
 
 def get_data_by_ip(did,start,end):
             print("inside the get log function")
-            ip=Device.objects.filter(device_id=did).values_list("device_ip",flat=True)
+            ip=Devices.objects.filter(device_id=did).values_list("device_ip",flat=True)
             
             url=f"http://{ip[0]}/cgi-bin/recordFinder.cgi?action=find&name=AccessControlCardRec&StartTime={int(start)}&EndTime={int(end)}&count=1000"
             response=requests.get(url,auth=HTTPDigestAuth('admin','admin123'))
             print("response url :",response.url)
             data=response.text.split('\n')
-            # print("data :",data)
+            print("data :",data)
             records = []
 
             # Split the text into lines
@@ -222,7 +223,7 @@ def get_data_by_ip(did,start,end):
                 Type=records[index]['Type']
                 image_url=records[index]['URL']
                 employee_id = records[index]['UserID']
-                devi=Device.objects.get(device_id=did)
+                devi=Devices.objects.get(device_id=did)
                # employee=Employee.objects.get(employee_id=employee_id)
                 # intime=datetime.utcfromtimestamp(int(InTime.rstrip('\r')))
                 utc_datetime = datetime.utcfromtimestamp(int(InTime.rstrip('\r')))
@@ -287,20 +288,21 @@ def get_data_by_ip(did,start,end):
             return datas
 
 def auto_save():
-    device=Device.objects.all().order_by('-device_id')
-    serializer=DeviceSerializer(device,many=True)
+    device=Devices.objects.all().order_by('-device_id')
+    serializer=DevicesSerializer(device,many=True)
     for d in serializer.data:
-        timezone = pytz.timezone('Asia/Dhaka')  # Replace 'Asia/Dhaka' with the desired timezone
-
-        # Get the current time in the specified timezone
-        current_time = datetime.now(timezone)
-
-        # Calculate the start time by subtracting 5 minutes
-        start_time = current_time - timedelta(minutes=180)
-        
-        start=int(start_time.timestamp())
-        end=int(current_time.timestamp())
         if d["active_status"]=="active":
+            timezone = pytz.timezone('Asia/Dhaka')  # Replace 'Asia/Dhaka' with the desired timezone
+
+            # Get the current time in the specified timezone
+            current_time = datetime.now(timezone)
+
+            # Calculate the start time by subtracting 5 minutes
+            start_time = current_time - timedelta(minutes=180)
+            
+            start=int(start_time.timestamp())
+            end=int(current_time.timestamp())
+
             print("device id :",d["device_id"])
             get_data_by_ip(d["device_id"],start,end)
 

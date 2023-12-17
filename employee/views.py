@@ -72,7 +72,8 @@ def employee(request):
 			all_data=serializer.data
 			after_serialize=EmployeeSerializer(employee)
 
-			##this portion should be uncomment during employee adding into the device			
+			##this portion should be uncomment during employee adding into the device	
+			print("all data :",all_data)		
 
 			if all_data["group_id"] != None and all_data["image"]==None:
 				train_employee(all_data)
@@ -100,12 +101,14 @@ def employee(request):
 @permission_classes([IsAuthenticated])
 def employee_with_id(request,pk):
 	task = Employee.objects.filter(employee_id=pk).first()
-	checker = EmployeeSerializer(task, many=False)
-	checker_data=checker.data
 
 
-	print("task : ",task)
+
+	
 	if task!=None:
+		print("task : ",task)
+		checker = EmployeeSerializer(task, many=False)
+		checker_data=checker.data
 		if request.method == 'GET' :
 			serializer = EmployeeSerializer(task, many=False)
 			# hashed=make_password("1234") 
@@ -116,7 +119,7 @@ def employee_with_id(request,pk):
 			timestamp_str = serializer.data["UniqueCardNumber"]
 
 			# Convert string to datetime object
-			timestamp_dt = datetime.strptime(timestamp_str, "%Y-%m-%dT%H:%M:%SZ")
+			timestamp_dt = datetime.strptime(timestamp_str, "%Y-%m-%dT%H:%M:%S%z")
 
 			# Convert datetime object to timestamp (seconds since the epoch)
 			timestamp_seconds = timestamp_dt.timestamp()
@@ -133,7 +136,7 @@ def employee_with_id(request,pk):
 
 		if request.method == 'POST' :
 
-			serializer = EmployeeSerializer(instance=task, data=request.data)
+			serializer = EmployeeSerializer(instance=task, data=request.data,partial=True)
 			
 			# sdata=serializer.data
 			### This portion will uncomment during actual employee train and testing
@@ -164,7 +167,7 @@ def employee_with_id(request,pk):
 				print("hashed password : ",employee.password)
 				employee.save()
 				
-				after_serialize=EmployeeSerializer(instance=employee,many=False)
+				after_serialize=EmployeeSerializer(instance=employee,many=False,partial=True)
 
 				# if after_serialize.is_valid():
 				# 	after_serialize.save()
@@ -342,50 +345,84 @@ def train_employee_with_image(data):
 	print("img :",img)
 	print("media root :",settings.MEDIA_ROOT)
 	print("image path :",image_path)
-	print("register date : ",data["registration_date"])
+	print("inside train :",data)
+	print("register date : ",data['registration_date'])
 	print("validity_date :",data["validity_date"])
+	reg_date=data['registration_date']
+	reg_date=reg_date.replace("-","")
+	valid_date=data["validity_date"]
+	valid_date=valid_date.replace("-","")
+	cardno=int(data["cardNo"])
+	username=data["username"]
+	employee_id=data["employee_id"]
+	password=data["password"]
 	# DeviceLocalIP=GroupDevice.objects.get(group_id = data["group_id"])
+	# active_status=devices= GroupDevice.objects.filter(group_id=data["group_id"]).values_list('active_status', flat=True)
 	devices= GroupDevice.objects.filter(group_id=data["group_id"]).values_list('device_id', flat=True)
+	train=[]
 	i=0
 	for dev in devices:
 		print("i=",i)
 		i=i+1
 		print("dev :",dev)
-		DeviceLocalIP=Device.objects.filter(device_id =dev).values_list("device_ip",flat=True)
+		DeviceLocalIP=Device.objects.filter(device_id =dev).values_list("device_ip","active_status",flat=False)
+		print("device info :",DeviceLocalIP)
 		
-		ip=DeviceLocalIP[0]
-		print("ip : ",ip)
-
-		###Add user info into dahua device
-		reg_date=data["registration_date"]
-		reg_date=reg_date.replace("-","")
-		valid_date=data["validity_date"]
-		valid_date=valid_date.replace("-","")
-		cardno=int(data["cardNo"])
-		employee_add_info_url=f'http://{ip}/cgi-bin/recordUpdater.cgi?action=insert&name=AccessControlCard&CardName={data["username"]}&CardNo={cardno}&UserID={data["employee_id"]}&CardStatus=0&CardType=0&Password={data["password"]}&Doors[{0}]=0&VTOPosition=01018001&ValidDateStart={reg_date}%20093811&ValidDateEnd={valid_date}%20093811'
-		response=requests.get(employee_add_info_url,auth=HTTPDigestAuth('admin','admin123'))
-		print("response create employee:",response.url)
+		ip=DeviceLocalIP[0][0]
+		status=DeviceLocalIP[0][1]
+		flag=False
+		try:
+		
+			if status=="active":
 
 
-		###Dahua image add API
+				# print("ip : ",ip)
 
-		resize_image(image_path,image_path,80)
-		with open(image_path,"rb") as image:
-			im=image.read()
-			# print("img :",im)
-			base64_img=base64.b64encode(im)
-			# print("image base64 : ",base64_img.decode("utf-8"))
-			add_image_url=f"http://{ip}/cgi-bin/FaceInfoManager.cgi?action=add"
-			data={
-				"UserID":data["employee_id"],
-				"Info":{
-					"UserName":data["username"],
-					"PhotoData":[base64_img.decode("utf-8")]
-				}
+				###Add user info into dahua device
+				print("inside loop registration date : ",reg_date)
 
-			}
-			response = requests.post(add_image_url,json=data,auth=HTTPDigestAuth('admin','admin123'),headers={"Content-Type":"application/json"})
-			print("response add image:",response.text)
+				
+				employee_add_info_url=f'http://{ip}/cgi-bin/recordUpdater.cgi?action=insert&name=AccessControlCard&CardName={username}&CardNo={cardno}&UserID={employee_id}&CardStatus=0&CardType=0&Password={password}&Doors[{0}]=0&VTOPosition=01018001&ValidDateStart={reg_date}%20093811&ValidDateEnd={valid_date}%20093811'
+				response=requests.get(employee_add_info_url,auth=HTTPDigestAuth('admin','admin123'))
+				print("response create employee:",response.url)
+
+
+				###Dahua image add API
+
+				resize_image(image_path,image_path,80)
+				with open(image_path,"rb") as image:
+					im=image.read()
+					# print("img :",im)
+					base64_img=base64.b64encode(im)
+					print("image base64 : ",base64_img.decode("utf-8"))
+					add_image_url=f"http://{ip}/cgi-bin/FaceInfoManager.cgi?action=add"
+					data={
+						"UserID":employee_id,
+						"Info":{
+							"UserName":username,
+							"PhotoData":[base64_img.decode("utf-8")]
+						}
+
+					}
+					train_flag=False
+					if len(train)>0:
+						for p in train:
+							if p['status']=='active' and p['ip']==ip and p['train']==True:
+								train_flag=True
+					if train_flag==False:
+						response = requests.post(add_image_url,json=data,auth=HTTPDigestAuth('admin','admin123'),headers={"Content-Type":"application/json"})
+						print("response add image:",response.text)
+						print("response add image code:",response.status_code)
+						if response.status_code==200:
+							flag=True
+					train.append({"ip":ip,"status":status,"train":flag})
+					
+			else:
+				train.append({"ip":ip,"status":status,"train":False})
+		except ConnectionAbortedError as e:
+			print(e)
+	print("trained list :",train)
+
 
 
 
@@ -397,6 +434,17 @@ def update_data(data):
 		i=i+1
 		print("dev :",dev)
 		DeviceLocalIP=Device.objects.filter(device_id =dev).values_list("device_ip",flat=True)
+
+		DeviceLocalIP=Device.objects.filter(device_id =dev).values_list("device_ip","active_status",flat=False)
+		print("device info :",DeviceLocalIP)
+		
+		ip=DeviceLocalIP[0][0]
+		status=DeviceLocalIP[0][1]
+		flag=False
+
+
+
+
 		EmployeeName = data["username"]
 		
 		EmployeeID = data["employee_id"]
@@ -406,19 +454,20 @@ def update_data(data):
 		print("EmployeeName : ",EmployeeName)
 		print("EmployeeID : ",EmployeeID)
 		print("Password : ",Password)
+		if status=="active":
 
-		RecordNumberFrom_Find_Employee_Info=int(get_record_number(DeviceLocalIP[0],EmployeeID))
-		print("ip :",DeviceLocalIP[0])
+			RecordNumberFrom_Find_Employee_Info=int(get_record_number(ip,EmployeeID))
+			print("ip :",DeviceLocalIP[0])
 
 
-		door = '&Doors[0]=0'
-		door_decoded = unquote(door)
-		update_info=f"http://{DeviceLocalIP[0]}/cgi-bin/recordUpdater.cgi?action=update&name=AccessControlCard&recno={RecordNumberFrom_Find_Employee_Info}&CardName={EmployeeName}&CardNo={data['cardNo']}&UserID={EmployeeID}&CardStatus=0&CardType=0&Password={Password}&Doors[{0}]=0"
-		
-		response = requests.get(update_info,auth=HTTPDigestAuth('admin','admin123'))
-		print("update_info_url :  ",response.url)
+			door = '&Doors[0]=0'
+			door_decoded = unquote(door)
+			update_info=f"http://{ip}/cgi-bin/recordUpdater.cgi?action=update&name=AccessControlCard&recno={RecordNumberFrom_Find_Employee_Info}&CardName={EmployeeName}&CardNo={data['cardNo']}&UserID={EmployeeID}&CardStatus=0&CardType=0&Password={Password}&Doors[{0}]=0"
+			
+			response = requests.get(update_info,auth=HTTPDigestAuth('admin','admin123'))
+			print("update_info_url :  ",response.url)
 
-		print("response update info: ",response.text)
+			print("response update info: ",response.text)
 
 def get_record_number(ip,employee_id):
 		find_employee_info_url=f"http://{ip}/cgi-bin/recordFinder.cgi?action=find&name=AccessControlCard&condition.UserID={employee_id}&count={8000}"
@@ -473,18 +522,35 @@ def delete_info(e_id):
 	for dev in devices:
 		print("dev : ",dev)
 
-		DeviceLocalIP=Device.objects.filter(device_id =dev).values_list("device_ip",flat=True)
+		DeviceLocalIP=Device.objects.filter(device_id =dev).values_list("device_ip","active_status",flat=False)
+		ip=DeviceLocalIP[0][0]
+		is_active=DeviceLocalIP[0][1]
+		if is_active=="active":
+			find_employee_info_url=f"http://{ip}/cgi-bin/recordFinder.cgi?action=find&name=AccessControlCard&condition.UserID={data['employee_id']}&count={8000}"
+			resp=requests.get(find_employee_info_url,auth=HTTPDigestAuth('admin','admin123'))
+			print("response :",resp.text)
+			r=resp.text
+			r=r.replace("found=","")
+			print("num of rec found :",r)
+			# n=int(r)
+			# print("n = ",n)
+			match = re.search(r'found=(\d+)', resp.text)
+			n=0
+			if match:
+				found_value = match.group(1)
+				print(f"Found value: {found_value}")
+				n=int(found_value)
+			else:
+				print("No 'found' value found.")
+			
+			if n>0:
+			### RecordNumberFrom_Find_Employee_Info should be retrieve from 'resp.text'
+				RecordNumberFrom_Find_Employee_Info=int(get_record_number(DeviceLocalIP[0],data['employee_id'])) #for testing ,suppose RecordNumberFrom_Find_Employee_Info=45
 
 
-		find_employee_info_url=f"http://{DeviceLocalIP[0]}/cgi-bin/recordFinder.cgi?action=find&name=AccessControlCard&condition.UserID={data['employee_id']}&count={8000}"
-		resp=requests.get(find_employee_info_url,auth=HTTPDigestAuth('admin','admin123'))
-		print("response :",resp.text)
-		### RecordNumberFrom_Find_Employee_Info should be retrieve from 'resp.text'
-		RecordNumberFrom_Find_Employee_Info=int(get_record_number(DeviceLocalIP[0],data['employee_id'])) #for testing ,suppose RecordNumberFrom_Find_Employee_Info=45
-
-		employee_delete_url=f"http://{DeviceLocalIP[0]}/cgi-bin/recordUpdater.cgi?action=remove&name=AccessControlCard&recno={RecordNumberFrom_Find_Employee_Info}"
-		response= requests.get(employee_delete_url,auth=HTTPDigestAuth('admin','admin123'))
-		print("response : ",response.text)
+				employee_delete_url=f"http://{DeviceLocalIP[0]}/cgi-bin/recordUpdater.cgi?action=remove&name=AccessControlCard&recno={RecordNumberFrom_Find_Employee_Info}"
+				response= requests.get(employee_delete_url,auth=HTTPDigestAuth('admin','admin123'))
+				print("delete response : ",response.text)
 
 
 
@@ -519,3 +585,28 @@ def pagination():
 			
 			rangeBegin=(int(pageCount)-1)*int(dataCount)
 			rangeEnd=int(pageCount)*int(dataCount)
+
+
+@api_view(['GET'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def get_employee_info_from_mis(request,pk):
+	id=pk
+
+	data={
+    "employee_id": id,
+    "last_login": None,
+    "is_superuser": False,
+    "is_staff": True,
+    "is_active": True,
+    "username": "pronoy",
+    "email": "-",
+    "phone_number": "-",
+    "employee_type": "user",
+    "shift": "morning",
+    "department": "gynocology",
+    "designation": "gynocologist"
+}
+
+
+	return Response({"message":data})

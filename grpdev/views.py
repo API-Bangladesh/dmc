@@ -29,8 +29,11 @@ def empgrpdev(request):
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
 def empgrpdev_with_id(request,pk):
-    grpdev = GroupDevice.objects.get(id=pk)
-    if grpdev!=None:
+    find = GroupDevice.objects.filter(id=pk).first()
+
+    if find!=None:
+        grpdev = GroupDevice.objects.get(id=pk)
+
         if request.method == 'GET':
             gserializer =GroupDeviceSerializer(grpdev)
             return Response(gserializer.data)

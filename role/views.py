@@ -37,9 +37,9 @@ def role_with_id(request,pk):
 
     print("check :",check)
     if check:
+        # find=Role.objects.filter(role_id=pk).first()
         role_data = Role.objects.get(role_id=pk)
         
-
         if request.method == 'GET':
             role_serializer = RoleSerializer(role_data)
             return  Response(role_serializer.data)
@@ -51,12 +51,9 @@ def role_with_id(request,pk):
             else:
                 return Response(role_serializer.error,status=status.HTTP_400_BAD_REQUEST)
         if request.method == 'DELETE':
-            if len(role_data)>0:
+            role_data.delete()
+            return Response({"message":"Role Successfully deleted !"})
 
-                role_data.delete()
-                return Response({"message":"Role Successfully deleted !"})
-            else:
-                return Response({"message":"Role Not Exist!"})
     else:
         return Response({"message":"Role Not Exist!"})
 

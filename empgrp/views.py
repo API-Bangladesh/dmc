@@ -35,8 +35,10 @@ def group(request):
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
 def group_with_id(request,pk):
-    dev=Group.objects.get(group_id=pk)
-    if dev!=None:
+    
+    task1 = Group.objects.filter(group_id=pk).first()
+    if task1!=None:
+        dev=Group.objects.get(group_id=pk)
         if request.method == 'GET':
             desSerializer=GroupSerializer(dev,many=False)
             return Response(desSerializer.data,status=status.HTTP_201_CREATED)
@@ -51,7 +53,7 @@ def group_with_id(request,pk):
             dev.delete()
             return Response({"message":"Group successfully deleted!"})
     else:
-        return Response({"message":"Employee id is not valid"})
+        return Response({"message":"Group id is not valid"})
 
     return 
 
