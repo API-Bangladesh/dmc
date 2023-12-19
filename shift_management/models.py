@@ -7,6 +7,7 @@ class ShiftManagement(models.Model):
     shift_beginning=models.TimeField(default="00:00:00")
     shift_end=models.TimeField(default="00:00:00")
     total_time=models.DurationField(blank=True, null=True)
+    shift_name=models.CharField(max_length=100,null=True,default="-")
     def save(self, *args, **kwargs):
         # Convert time fields to datetime objects
         beginning = datetime.combine(datetime.today(), self.shift_beginning)
@@ -16,3 +17,4 @@ class ShiftManagement(models.Model):
         if self.shift_beginning and self.shift_end:
             self.total_time = end - beginning
         super().save(*args, **kwargs)
+    

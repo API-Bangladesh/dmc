@@ -14,7 +14,8 @@
 
 
 from django.urls import path
-from . import views
+from . import views,add_from_csv
+
 
 urlpatterns = [
 	# path('', views.apiOverview, name="api-overview"),
@@ -23,5 +24,7 @@ urlpatterns = [
     
 	path('', views.employee, name="employee"),
 	path('<str:pk>/', views.employee_with_id, name="employee_with_id"),
-    path('mis/<str:pk>/',views.get_employee_info_from_mis,name="employee_with_id")
+    path('mis/<str:pk>/',views.get_employee_info_from_mis,name="employee_with_id"),
+    path('bulk_upload/',views.add_from_csv,name="add_from_csv")
+    
 ]

@@ -114,4 +114,19 @@ class EmployeeGroupDevice(models.Model):
     device_id = models.ForeignKey(Devices,on_delete=models.CASCADE,null=False)
     def __str__(self):
         return self.id
+
+
+
+###train user from csv
     
+def user_file_upload(filename):
+    
+    print("path : ","files/{filename}".format(filename=filename))
+    return "files/{filename}".format(filename=filename)
+
+
+
+class TrainEmployeeFromCSV(models.Model):
+    file=models.FileField(upload_to=user_file_upload,null=False,blank=False)
+    def __str__(self):
+        return self.file

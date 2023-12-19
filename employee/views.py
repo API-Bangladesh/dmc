@@ -3,7 +3,7 @@ from pydoc import stripid
 from django.shortcuts import render
 from django.conf import settings
 from rest_framework.response import Response
-from .serializers import EmployeeSerializer
+from .serializers import EmployeeSerializer,TrainEmployeeFromCSVSerializer
 from .models import Employee
 from rest_framework import status
 from django.core.files.storage import default_storage
@@ -13,7 +13,7 @@ import json
 import base64
 import os
 from pathlib import Path
-from device.models import Device
+from devices.models import Devices
 from . import models
 from grpdev.models import GroupDevice
 from requests.auth import HTTPDigestAuth
@@ -187,6 +187,26 @@ def employee_with_id(request,pk):
 	else:
 		return Response({"message":"Employee id is not valid"})
 
+@api_view(['POST'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def add_from_csv(request):
+    data=request.data["file"]
+    file=TrainEmployeeFromCSVSerializer(data)
+    print("file :",data)
+    # Specify the file path
+    csv_file_path = 'your_file.csv'
+
+    # Open the CSV file
+    with open(csv_file_path, 'r') as file:
+        # Create a CSV reader
+        csv_reader = csv.reader(file)
+
+        # Iterate through each row in the CSV file
+        for row in csv_reader:
+            # Access individual elements in each row
+            print(row)
+
 def add_image(data):
 	print("E_ID :",data['employee_id'])
 	print("Name :",data["username"])
@@ -205,39 +225,41 @@ def add_image(data):
 	# DeviceLocalIP=GroupDevice.objects.get(group_id = data["group_id"])
 	devices= GroupDevice.objects.filter(group_id=data["group_id"]).values_list('device_id', flat=True)
 	i=0
+	resize_image(image_path,image_path,80)
 	for dev in devices:
 		print("i=",i)
 		i=i+1
 		print("dev :",dev)
-		DeviceLocalIP=Device.objects.filter(device_id =dev).values_list("device_ip",flat=True)
-		
-		ip=DeviceLocalIP[0]
-		print("ip : ",ip)
+		DeviceLocalIP=Devices.objects.filter(device_id =dev).values_list("device_ip","active_status",flat=False)
+		if DeviceLocalIP[0][1]=="active":
+			ip=DeviceLocalIP[0][0]
 
-		###Add user info into dahua device
-		reg_date=data["registration_date"]
-		reg_date=reg_date.replace("-","")
-		valid_date=data["validity_date"]
-		valid_date=valid_date.replace("-","")
-		###Dahua image add API
+			print("ip : ",ip)
 
-		resize_image(image_path,image_path,80)
-		with open(image_path,"rb") as image:
-			im=image.read()
-			# print("img :",im)
-			base64_img=base64.b64encode(im)
-			# print("image base64 : ",base64_img.decode("utf-8"))
-			add_image_url=f"http://{ip}/cgi-bin/FaceInfoManager.cgi?action=add"
-			data={
-				"UserID":data["employee_id"],
-				"Info":{
-					"UserName":data["username"],
-					"PhotoData":[base64_img.decode("utf-8")]
+			###Add user info into dahua device
+			reg_date=data["registration_date"]
+			reg_date=reg_date.replace("-","")
+			valid_date=data["validity_date"]
+			valid_date=valid_date.replace("-","")
+			###Dahua image add API
+
+			
+			with open(image_path,"rb") as image:
+				im=image.read()
+				# print("img :",im)
+				base64_img=base64.b64encode(im)
+				# print("image base64 : ",base64_img.decode("utf-8"))
+				add_image_url=f"http://{ip}/cgi-bin/FaceInfoManager.cgi?action=add"
+				data={
+					"UserID":data["employee_id"],
+					"Info":{
+						"UserName":data["username"],
+						"PhotoData":[base64_img.decode("utf-8")]
+					}
+
 				}
-
-			}
-			response = requests.post(add_image_url,json=data,auth=HTTPDigestAuth('admin','admin123'),headers={"Content-Type":"application/json"})
-			print("response add image:",response.text)
+				response = requests.post(add_image_url,json=data,auth=HTTPDigestAuth('admin','admin123'),headers={"Content-Type":"application/json"})
+				print("response add image:",response.text)
 
 	return 
 
@@ -245,7 +267,7 @@ def add_image(data):
 def get_employee_data(data):
 		devices= GroupDevice.objects.filter(group_id=data["group_id"]).values_list('device_id', flat=True)
 		for dev in devices:
-			DeviceLocalIP=Device.objects.filter(device_id =dev).values_list("device_ip",flat=True)
+			DeviceLocalIP=Devices.objects.filter(device_id =dev).values_list("device_ip",flat=True)
 			url=f"http://{DeviceLocalIP[0]}/cgi-bin/recordFinder.cgi?action=find&name=AccessControlCard&condition.UserID={data['employee_id']}&count=100"
 			resp=requests.get(url,auth=HTTPDigestAuth('admin','admin123'))
 			print("response :",resp.text)
@@ -312,23 +334,24 @@ def train_employee(data):
 		print("i=",i)
 		i=i+1
 		print("dev :",dev)
-		DeviceLocalIP=Device.objects.filter(device_id =dev).values_list("device_ip",flat=True)
+		DeviceLocalIP=Devices.objects.filter(device_id =dev).values_list("device_ip","active_status",flat=False)
 		# for ip in DeviceLocalIP:
-		
+		if DeviceLocalIP[0][1]=="active":
 
-		ip=DeviceLocalIP[0]
-		print("ip : ",ip)
+			ip=DeviceLocalIP[0][0]
+			print("ip found: ",ip)
 
-		###Add user info into dahua device
-		reg_date=data["registration_date"]
-		reg_date=reg_date.replace("-","")
-		valid_date=data["validity_date"]
-		valid_date=valid_date.replace("-","")
-
-		employee_add_info_url=f'http://{ip}/cgi-bin/recordUpdater.cgi?action=insert&name=AccessControlCard&CardName={data["username"]}&CardNo={data["cardNo"]}&UserID={data["employee_id"]}&CardStatus=0&CardType=0&Password={data["password"]}&Doors[0]=0&VTOPosition=01018001&ValidDateStart={reg_date}%20093811&ValidDateEnd={valid_date}%20093811'
-		response=requests.get(employee_add_info_url,auth=HTTPDigestAuth('admin','admin123'))
-		print("response create employee:",response)
-
+			###Add user info into dahua device
+			reg_date=data["registration_date"]
+			reg_date=reg_date.replace("-","")
+			valid_date=data["validity_date"]
+			valid_date=valid_date.replace("-","")
+			try:
+				employee_add_info_url=f'http://{ip}/cgi-bin/recordUpdater.cgi?action=insert&name=AccessControlCard&CardName={data["username"]}&CardNo={data["cardNo"]}&UserID={data["employee_id"]}&CardStatus=0&CardType=0&Password={data["password"]}&Doors[0]=0&VTOPosition=01018001&ValidDateStart={reg_date}%20093811&ValidDateEnd={valid_date}%20093811'
+				response=requests.get(employee_add_info_url,auth=HTTPDigestAuth('admin','admin123'))
+				print("response create employee:",response)
+			except ConnectionError as e:
+				print("error :",e)
 
 
 
@@ -365,7 +388,7 @@ def train_employee_with_image(data):
 		print("i=",i)
 		i=i+1
 		print("dev :",dev)
-		DeviceLocalIP=Device.objects.filter(device_id =dev).values_list("device_ip","active_status",flat=False)
+		DeviceLocalIP=Devices.objects.filter(device_id =dev).values_list("device_ip","active_status",flat=False)
 		print("device info :",DeviceLocalIP)
 		
 		ip=DeviceLocalIP[0][0]
@@ -433,9 +456,9 @@ def update_data(data):
 		print("i=",i)
 		i=i+1
 		print("dev :",dev)
-		DeviceLocalIP=Device.objects.filter(device_id =dev).values_list("device_ip",flat=True)
+		DeviceLocalIP=Devices.objects.filter(device_id =dev).values_list("device_ip",flat=True)
 
-		DeviceLocalIP=Device.objects.filter(device_id =dev).values_list("device_ip","active_status",flat=False)
+		DeviceLocalIP=Devices.objects.filter(device_id =dev).values_list("device_ip","active_status",flat=False)
 		print("device info :",DeviceLocalIP)
 		
 		ip=DeviceLocalIP[0][0]
@@ -522,7 +545,7 @@ def delete_info(e_id):
 	for dev in devices:
 		print("dev : ",dev)
 
-		DeviceLocalIP=Device.objects.filter(device_id =dev).values_list("device_ip","active_status",flat=False)
+		DeviceLocalIP=Devices.objects.filter(device_id =dev).values_list("device_ip","active_status",flat=False)
 		ip=DeviceLocalIP[0][0]
 		is_active=DeviceLocalIP[0][1]
 		if is_active=="active":
@@ -555,20 +578,26 @@ def delete_info(e_id):
 
 
 def resize_image(input_path,output_path,max_size_kb):
-    with Image.open(input_path) as img:
-        original_size = os.path.getsize(input_path)
-        original_width, original_height = img.size
-        target_size_bytes = max_size_kb * 1024
-        scale_factor = 1.0
-        if original_size > target_size_bytes:
-            scale_factor = (target_size_bytes / original_size) ** 0.5
+	try:
+		with Image.open(input_path) as img:
+			original_size = os.path.getsize(input_path)
+			original_width, original_height = img.size
+			target_size_bytes = max_size_kb * 1024
+			scale_factor = 1.0
+			if original_size > target_size_bytes:
+				scale_factor = (target_size_bytes / original_size) ** 0.5
 
-        new_width = int(original_width * scale_factor)
-        new_height = int(original_height * scale_factor)
-        resized_img = img.resize((new_width, new_height), Image.LANCZOS)
-        resized_img.thumbnail((230, 230)) 
-        resized_img.save(output_path, optimize=True, quality=100)
-        print("compressing ...")
+			new_width = int(original_width * scale_factor)
+			new_height = int(original_height * scale_factor)
+			resized_img = img.resize((new_width, new_height), Image.LANCZOS)
+			resized_img.thumbnail((230, 230)) 
+			resized_img.save(output_path, optimize=True, quality=100)
+			print("compressing ...")
+	except MemoryError as e:
+		print("not compressed :",e)
+		
+	
+	return Response({"message":"compressed successfully"})
 
 
 def pagination():

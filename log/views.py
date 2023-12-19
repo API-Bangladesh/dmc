@@ -29,7 +29,7 @@ from login.models import LogInLog
 from syncInfo.models import SyncInfoTable
 from syncInfo.serializers import SyncInfoTableSerializer 
 
-@api_view(['GET','POST'])
+@api_view(['POST'])
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
 def log(request):

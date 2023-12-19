@@ -17,9 +17,10 @@ from django.contrib.auth.hashers import make_password
 @api_view(['POST'])
 def email_sending(request):
     if 'email' in request.data:
+        print("email :",request.data["email"])
         find=Employee.objects.filter(email=request.data["email"]).first()
         if find !=None:
-            employee=Employee.objects.get(email=request.data["email"])
+            employee=Employee.objects.filter(email=request.data["email"]).first()
             random_string_1 = secrets.token_hex(3)
             random_string_2 = secrets.token_hex(3)
             random_string_3 = secrets.token_hex(3)
@@ -71,50 +72,56 @@ def email_sending(request):
             return Response({"message":"email not varified"})
     elif 'password' in request.data:
         password=request.data['password']
-        if 'token' in request.headers:
+        print("password :",password)
+        if 'Reset-Token' in request.headers:
             print("headers :",request.headers)
-            token=request.headers['Token']
+            token=request.headers['Reset-Token']
+            print("token found :",token)
             exist=ForgetPassword.objects.filter(token=token).first()
             if exist!=None :
                 print("exist :",exist)
-                delele_data=ForgetPassword.objects.filter(token=token).first()
-                expire_date=ForgetPassword.objects.filter(token=token).values_list("expiration_date","employee_id",flat=False)
-                print("employee id :",expire_date[0][1])
-                delele_data=ForgetPassword.objects.filter(employee_id=expire_date[0][1])
-                dt = datetime.now()
-                tmp = dt.timestamp()
-                utc_dat = datetime.utcfromtimestamp(tmp)
-                desired_tz = pytz.timezone('Asia/Dhaka')
-                curr_dt = utc_dat.astimezone(desired_tz)
-                if curr_dt>expire_date[0][0]:
-                    print("curr_dt : ",curr_dt,"\nexpire_date",expire_date[0][0].replace(tzinfo=timezone.utc))
-                    delele_data.delete()
+                delel_data=ForgetPassword.objects.filter(token=token).first()
+                if delel_data!=None:
+                    expire_date=ForgetPassword.objects.filter(token=token).values_list("expiration_date","employee_id",flat=False)
+                    print("employee id :",expire_date[0][1])
+                    delele_data=ForgetPassword.objects.filter(employee_id=expire_date[0][1])
+                    dt = datetime.now()
+                    tmp = dt.timestamp()
+                    utc_dat = datetime.utcfromtimestamp(tmp)
+                    desired_tz = pytz.timezone('Asia/Dhaka')
+                    curr_dt = utc_dat.astimezone(desired_tz)
+                    if curr_dt>expire_date[0][0]:
+                        print("curr_dt : ",curr_dt,"\nexpire_date",expire_date[0][0].replace(tzinfo=timezone.utc))
+                        delele_data.delete()
 
-                    return Response({"message": "Token expired"})
+                        return Response({"message": "Token expired"})
+                    else:
+                        print("curr_dt : ",curr_dt,"\nexpire_date",expire_date[0][0].replace(tzinfo=timezone.utc))
+                        try:
+
+                            emp=Employee.objects.get(employee_id=expire_date[0][1])
+                            passw=request.data["password"]
+                            hashed=make_password(passw)
+                            request.data["password"]=hashed
+
+                            empserializer=EmployeeSerializer(instance=emp,data= request.data, partial=True)
+                            # print("empserializer data : ",empserializer.data)
+                            if empserializer.is_valid():
+                                # empserializer.data['password']=password
+                                empserializer.save()
+                                print("data",empserializer.data)
+                                return Response({"message": "Password Changed successfully !!!","data":empserializer.data})
+                        except Employee.DoesNotExist:
+                            # Handle the case where no Employee with the given employee_id is found
+                            print("Employee not found.")
+                        except ValidationError as e:
+                            # Handle validation errors if any occur
+                            print("Validation error:", e)      
+                            
+                        return Response({"message": "Password Changed unsuccessfully !!!","data":empserializer.data})
                 else:
-                    print("curr_dt : ",curr_dt,"\nexpire_date",expire_date[0][0].replace(tzinfo=timezone.utc))
-                    try:
-
-                        emp=Employee.objects.get(employee_id=expire_date[0][1])
-                        passw=request.data["password"]
-                        hashed=make_password(passw)
-                        request.data["password"]=hashed
-
-                        empserializer=EmployeeSerializer(instance=emp,data= request.data, partial=True)
-                        # print("empserializer data : ",empserializer.data)
-                        if empserializer.is_valid():
-                            # empserializer.data['password']=password
-                            empserializer.save()
-                            print("data",empserializer.data)
-                            return Response({"message": "Password Changed successfully !!!","data":empserializer.data})
-                    except Employee.DoesNotExist:
-                        # Handle the case where no Employee with the given employee_id is found
-                        print("Employee not found.")
-                    except ValidationError as e:
-                        # Handle validation errors if any occur
-                        print("Validation error:", e)      
-                        
-                    return Response({"message": "Password Changed unsuccessfully !!!","data":empserializer.data})
+                        print("exist :",delel_data)
+                        return Response({"message": "Token is not valid"})
             else:
                 print("exist :",exist)
                 return Response({"message": "Token is not valid"})
@@ -122,7 +129,7 @@ def email_sending(request):
 
 
 
-            return Response({"token": request.headers['Token']})
+            # return Response({"token": request.headers['Token']})
 
 
     else:
@@ -176,6 +183,6 @@ def expireTime():
 def sendmail(email,token):
     subject="DMC login password change"
     email_from = settings.EMAIL_HOST_USER
-    message=f"please got to http://10.10.20.101:8000/?token={token}"
+    message=f"please got to http://10.10.23.89:3000/auth/forgot-password?token={token}"
     send_mail(subject, message, email_from,[email,])
     return Response({"message":"mail sent"})
