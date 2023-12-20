@@ -59,6 +59,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'django.core.files.storage',
     'corsheaders',
+    'jamiul',
+    'rezvi',
     'rest_framework_simplejwt'
 
 ]
