@@ -59,8 +59,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'django.core.files.storage',
     'corsheaders',
-    'controler',
-    'deviceip',
     'rest_framework_simplejwt'
 
 ]
