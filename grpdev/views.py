@@ -8,7 +8,6 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 
-# Create your views here.
 @api_view(['GET','POST'])
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
