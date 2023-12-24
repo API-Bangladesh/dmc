@@ -385,6 +385,7 @@ def train_employee_with_image(data):
 	devices= GroupDevice.objects.filter(group_id=data["group_id"]).values_list('device_id', flat=True)
 	train=[]
 	i=0
+	print("total devices :",devices.count())
 	for dev in devices:
 		print("i=",i)
 		i=i+1
@@ -418,7 +419,7 @@ def train_employee_with_image(data):
 					im=image.read()
 					# print("img :",im)
 					base64_img=base64.b64encode(im)
-					print("image base64 : ",base64_img.decode("utf-8"))
+					# print("image base64 : ",base64_img.decode("utf-8"))
 					add_image_url=f"http://{ip}/cgi-bin/FaceInfoManager.cgi?action=add"
 					data={
 						"UserID":employee_id,

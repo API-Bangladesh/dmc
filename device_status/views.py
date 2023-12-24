@@ -20,6 +20,9 @@ def devices_status(request):
         dev_status=[]
         print("count : ",len(dev_datas))
         for i in range(len(dev_datas)):
+            if dev_datas[0]["device_ip"]==None:
+                dev_status.append({"device_id":dev_datas[i]["device_id"],"device_ip":"null","active_status":dev_datas[i]["active_status"],"present_active_status": "inactive"})
+                continue
             print(dev_datas[0]["device_id"])
             present_active_status= is_device_active(dev_datas[i]["device_ip"])
             present_active_status_str=""
@@ -54,6 +57,9 @@ def devices_status_with_id(request,pk):
             present_active_status_str="active"
         else:
             present_active_status_str="inactive"
+        if dev_datas["device_ip"]==None:
+            present_active_status_str="inactive"
+        
             
             dev_status.append({"device_id":dev_datas["device_id"],"device_ip":dev_datas["device_ip"],"active_status":dev_datas["active_status"],"present_active_status": present_active_status_str})
         print("device_status",dev_status)

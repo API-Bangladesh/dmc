@@ -2,7 +2,7 @@ from pythonping import ping
 
 def is_device_active(ip_address):
     try:
-        result = ping(ip_address, count=1)
+        result = ping(ip_address, count=2)
         return result.success()
     except Exception as e:
         print(f"An error occurred: {e}")

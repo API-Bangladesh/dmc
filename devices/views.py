@@ -22,12 +22,18 @@ def devices(request):
         return Response(serializer.data)
     if request.method == 'POST':
         print("Data :",request.data)
-        desiSerializer=DevicesSerializer(data=request.data)
-        if desiSerializer.is_valid():
-            desiSerializer.save()
-            return Response(desiSerializer.data,status=status.HTTP_201_CREATED)
+        d_ip=request.data["device_ip"]
+
+        is_exist=Devices.objects.filter(device_ip=d_ip).first()
+        if is_exist==None:
+            desiSerializer=DevicesSerializer(data=request.data)
+            if desiSerializer.is_valid():
+                desiSerializer.save()
+                return Response(desiSerializer.data,status=status.HTTP_201_CREATED)
+            else:
+                return Response(desiSerializer.errors,status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response(desiSerializer.errors,status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message":"device ip already exist !!"})
     
     return
 

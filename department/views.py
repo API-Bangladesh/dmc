@@ -1,6 +1,8 @@
 from django.shortcuts import render
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+
+from devices.models import Devices
 from .serializers import DepartmentSerializer
 from .models import Department
 from rest_framework import status
@@ -19,14 +21,20 @@ def department(request):
 		return Response(serializer.data)
 	if request.method == 'POST':
 		print("Request Data:", request.data)
-		serializer = DepartmentSerializer(data=request.data)
-		if serializer.is_valid():
-			serializer.save()
-			print("Saved Data:", serializer.data)
-			return Response(serializer.data, status=status.HTTP_201_CREATED)
+		print("Request Data: department", request.data["department"])
+		dept=request.data["department"]
+		is_exist=Department.objects.filter(department=dept).first()
+		if is_exist==None:
+			serializer = DepartmentSerializer(data=request.data)
+			if serializer.is_valid():
+				serializer.save()
+				print("Saved Data:", serializer.data)
+				return Response(serializer.data, status=status.HTTP_201_CREATED)
+			else:
+				print("Errors:", serializer.errors)
+				return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 		else:
-			print("Errors:", serializer.errors)
-			return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+			return Response({"message":"department already exist !!"})
 
 
 

@@ -8,9 +8,9 @@ class StructuredLog(models.Model):
 	employee_id=models.ForeignKey("employee.Employee",on_delete=models.CASCADE,null=True)
 	username = models.CharField(max_length=100,default="-",null=True)
 	InTime=models.DateTimeField(null=True)
-	OutTime=models.DateTimeField(null=True)
-	total_work_minutes=models.IntegerField(default=0,null=True)
-	cumalative_work_minutes=models.IntegerField(default=0,null=True)
+	# OutTime=models.DateTimeField(null=True)
+	# total_work_minutes=models.IntegerField(default=0,null=True)
+	# cumalative_work_minutes=models.IntegerField(default=0,null=True)
 
 
 

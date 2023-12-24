@@ -21,7 +21,8 @@ urlpatterns = [
     path('attendance_log/',include('attendance_report.urls')),
     path('sync_info/',include('syncInfo.urls')),
     path('shift/',include('shift_management.urls')),
-    path('status/',include('device_status.urls'))
+    path('status/',include('device_status.urls')),
+    path('structuedlog/',include('structuedlog.urls')),
 
 ]
 if settings.DEBUG:

@@ -20,12 +20,17 @@ def designation(request):
         return Response(serializer.data)
     if request.method == 'POST':
         print("Data :",request.data)
-        desiSerializer=DesignationSerializer(data=request.data)
-        if desiSerializer.is_valid():
-            desiSerializer.save()
-            return Response(desiSerializer.data,status=status.HTTP_201_CREATED)
+        desig=request.data["designation"]
+        is_exist=Designation.objects.filter(designation=desig).first()
+        if is_exist==None:
+            desiSerializer=DesignationSerializer(data=request.data)
+            if desiSerializer.is_valid():
+                desiSerializer.save()
+                return Response(desiSerializer.data,status=status.HTTP_201_CREATED)
+            else:
+                return Response(desiSerializer.errors,status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response(desiSerializer.errors,status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message":"designation already exist !!"})
     
     return
 

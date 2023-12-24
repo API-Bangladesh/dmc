@@ -29,7 +29,100 @@ from login.models import LogInLog
 from syncInfo.models import SyncInfoTable
 from syncInfo.serializers import SyncInfoTableSerializer 
 from devices.check_device_status import is_device_active
+from rest_framework.pagination import PageNumberPagination
+from grpdev.models import GroupDevice
+from empgrp.models import Group
+@api_view(['GET'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def raw_log(request):
+    date_filter = request.GET.get('date', None)
+    employee_id_filter = request.GET.get('employee_id', None)
+    group_filter=request.GET.get('group_id', None)
 
+    if request.method == 'GET':
+        tasks = Log.objects.all().order_by('-r_clsf_record_id')
+        if group_filter:
+            grp=Group.objects.get(group_id=group_filter)
+            devices_by_group=GroupDevice.objects.filter(group_id=group_filter).values_list('device_id', flat=True)
+            print(devices_by_group)
+
+
+            tasks=tasks.filter(device_id__in=devices_by_group)
+        if employee_id_filter:
+            tasks=tasks.filter(employee_id=employee_id_filter)
+        if date_filter:
+            tasks=tasks.filter(InTime__startswith=date_filter)
+    paginator = PageNumberPagination()
+    # paginator.page_size = 10  # Set the number of items per page
+    paginator.page_size = int(request.GET.get('page_size', 10))
+
+    result_page = paginator.paginate_queryset(tasks, request)
+
+    serializer = LogSerializer(result_page, many=True)
+
+    return paginator.get_paginated_response(serializer.data)
+
+@api_view(['GET'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def log_with_minutes(request,pk):
+    logintoken=request.headers['Authorization']
+    logintoken=logintoken.replace("Bearer ","")
+    employee_id_found=LogInLog.objects.filter(token=str(logintoken)).values_list("employee_id",flat=True)
+    print("login token :",logintoken)
+    print("loged in employee :",employee_id_found[0])
+    last_sync_time=SyncInfoTable.objects.all().order_by("-id")[:1]
+    last_sync_time_serializer=SyncInfoTableSerializer(last_sync_time,many=True)
+
+    print("last sync info :",last_sync_time_serializer.data[0]['syncTime'])
+    dt=last_sync_time_serializer.data[0]['syncTime']
+    stime = datetime.now() - timedelta(minutes=pk)
+    # stime = datetime.strptime(stime, "%Y-%m-%d %H:%M:%S")
+
+    # Specify the original time zone (assuming it's Dhaka)
+    original_timezone = pytz.timezone('Asia/Dhaka')
+
+    # Localize the datetime object to the original time zone
+    stime = original_timezone.localize(stime)
+
+    # Convert to UTC
+    stime_utc = stime.astimezone(pytz.utc)
+
+    # Convert datetime to timestamp
+    tstamp = stime_utc.timestamp()
+    print("last sync time :",tstamp)
+
+    
+    start=int(tstamp)
+    current_dt=datetime.now(original_timezone)
+
+    end=current_dt.timestamp()
+    # device=Device.objects.none()
+    print("In get start :",start,"end :",end)
+
+    device_id=Devices.objects.all().values_list("device_id","active_status",flat=False)
+    print("device ip:",device_id[0])
+    log=[]
+
+    print("device_id :",id," start : ",start,"end : ",end)
+    for did in device_id:
+        print("ip :",did[0])
+        if did[1]=="active" :
+            print("started syncking ...")
+
+            logs=get_data_by_ip(str(did[0]),start,end)
+            log.append(logs)
+
+    loged_employee=Employee.objects.get(employee_id=employee_id_found[0])
+    timezone = pytz.timezone('Asia/Dhaka')
+    current_datetime = datetime.now(timezone)
+    gmt6_datetime = current_datetime.astimezone(timezone)
+    print(current_datetime)
+
+    syncInfo(current_datetime,loged_employee)
+
+    return Response({"Sync Status":log})
 
 
 @api_view(['POST'])
@@ -72,6 +165,7 @@ def log(request):
 
         end=current_dt.timestamp()
         # device=Device.objects.none()
+        print("start :",start,"end :",end)
 
 
         ###ip based seraching
@@ -107,16 +201,23 @@ def log(request):
 
             print("device_id :",id," start : ",start,"end : ",end)
             for did in device_id:
-                  if did[0] in id and did[1]=="active" :
+                if did[0] in id and did[1]=="active" :
                     print("started syncking ...")
 
                     logs=get_data_by_ip(str(did[0]),start,end)
-                    log.append({did[0]:True})
+                    log.append(logs)
+                elif did[0] in id:
+                    log.append({did[0]:False})
+
+                    
+                
         else:
              for id in device_id:
-                  if id[1]=="active":
+                if id[1]=="active":
                     logs=get_data_by_ip(id[0],start,end)
-                    log.append({id[0]:True})
+                    log.append(logs)
+                else:
+                    log.append({id[0]:False})
         # print("log :",log)
         loged_employee=Employee.objects.get(employee_id=employee_id_found[0])
         timezone = pytz.timezone('Asia/Dhaka')
@@ -133,23 +234,22 @@ def log(request):
 
 
 
-# @api_view(['GET','DELETE'])
-# @authentication_classes([JWTAuthentication])
-# @permission_classes([IsAuthenticated])
-# def log_with_id(request,pk):
-#     return
+
+
 
 def get_data_by_ip(did,start,end):
             print("inside the get log function")
             ip=Devices.objects.filter(device_id=did).values_list("device_ip",flat=True)
             datas=[]
+            dev_info={}
             if is_device_active(ip[0]):
+                dev_info={did:True}
             
                 url=f"http://{ip[0]}/cgi-bin/recordFinder.cgi?action=find&name=AccessControlCardRec&StartTime={int(start)}&EndTime={int(end)}&count=1000"
                 response=requests.get(url,auth=HTTPDigestAuth('admin','admin123'))
                 print("response url :",response.url)
                 data=response.text.split('\n')
-                print("data :",data)
+                # print("data :",data)
                 records = []
 
                 # Split the text into lines
@@ -184,42 +284,6 @@ def get_data_by_ip(did,start,end):
                 
                 for index in range(len(records)):
                     
-                    # print("---for index---- : ",index)
-                    # print("AttendanceState : ",records[index]['AttendanceState'])
-                    # print("CardName : ",records[index]['CardName'])
-
-                    # print("CardNo : ",records[index]['CardNo'])
-                    # print("CardType : ",records[index]['CardType'])
-                    # print("CreateTime : ",records[index]['CreateTime'])
-
-                    # print("Door : ",records[index]['Door'])
-                    # print("ErrorCode : ",records[index]['ErrorCode'])
-                    # print("FaceIndex : ",records[index]['FaceIndex'])
-                    # print("HatColor : ",records[index]['HatColor'])
-                    # print("HatType : ",records[index]['HatType'])
-                    
-                    # print("Mask : ",records[index]['Mask'])
-                    # print("Method : ",records[index]['Method'])
-                    # print("Notes : ",records[index]['Notes'])
-                    # print("Password: ",records[index]['Password'])
-                    # print("ReaderID : ",records[index]['ReaderID'])
-
-                    # print("RecNo : ",records[index]['RecNo'])
-
-
-                    # print("RemainingTimes : ",records[index]['RemainingTimes'])
-                    # print("ReservedInt: ",records[index]['ReservedInt'])
-                    # print("ReservedString : ",records[index]['ReservedString'])
-                    # print("RoomNumber : ",records[index]['RoomNumber'])
-
-                    # print("Status: ",records[index]['Status'])
-                    # print("Type : ",records[index]['Type'])
-                    # print("url : http://192.168.68.135/RPC2_Loadfile",records[index]['URL'],"?timestamp="+records[index]['CreateTime'])
-
-                    # img_url= "http://192.168.68.135/RPC2_Loadfile"+records[index]['URL']+"?timestamp="+records[index]['CreateTime']
-                    # print("URL IS :",img_url)
-                    # print("UserID : ",records[index]['UserID'])
-                    # print("UserType : ",records[index]['UserType'])
                     CardName=records[index]['CardName']
                     InTime=records[index]['CreateTime']
                     RecNo=records[index]['RecNo']
@@ -229,7 +293,7 @@ def get_data_by_ip(did,start,end):
                     image_url=records[index]['URL']
                     employee_id = records[index]['UserID']
                     devi=Devices.objects.get(device_id=did)
-                # employee=Employee.objects.get(employee_id=employee_id)
+                    # employee=Employee.objects.get(employee_id=employee_id)
                     # intime=datetime.utcfromtimestamp(int(InTime.rstrip('\r')))
                     utc_datetime = datetime.utcfromtimestamp(int(InTime.rstrip('\r')))
 
@@ -279,8 +343,8 @@ def get_data_by_ip(did,start,end):
                                 
                                 ins.save()
                                 print("saved")
-                                insert_structed_log(device_id=devi,employee_id=employee,username=CardName,InTime=gmt6_datetime.replace(tzinfo=timezone.utc))
-                                insert_attendance_log(device_id=devi,employee_id=employee,username=CardName,InTime=gmt6_datetime.replace(tzinfo=timezone.utc))
+                                insert_structed_log(device_id=devi,employee_id=employee,username=CardName.rstrip('\r'),InTime=gmt6_datetime.replace(tzinfo=timezone.utc))
+                                insert_attendance_log(device_id=devi,employee_id=employee,username=CardName.rstrip('\r'),InTime=gmt6_datetime.replace(tzinfo=timezone.utc))
             
                             else:
                                 # insert_attendance_log(device_id=devi,employee_id=employee,username=CardName,InTime=gmt6_datetime.replace(tzinfo=timezone.utc))
@@ -289,11 +353,13 @@ def get_data_by_ip(did,start,end):
 
                                 print("data already synced")
                             datas.append(info)
+            else:
+                dev_info={did:False}
             
 
 
 
-            return datas
+            return dev_info
 
 def auto_save():
     device=Devices.objects.all().order_by('-device_id')

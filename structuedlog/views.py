@@ -7,7 +7,42 @@ from structuedlog.models import StructuredLog
 from structuedlog.serializers import StructuredLogSerializer
 from empgrp.models import Group
 from employee.models import Employee
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.permissions import IsAuthenticated
+
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.pagination import PageNumberPagination
 # Create your views here.
+
+
+@api_view(['GET'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def structured_log(request):
+    date_filter = request.GET.get('date', None)
+    employee_id_filter = request.GET.get('employee_id', None)
+    group_filter=request.GET.get('group_id', None)
+
+
+    tasks = StructuredLog.objects.all().order_by('-ID')
+
+    if group_filter:
+        tasks=tasks.filter(group_id=group_filter)
+    if employee_id_filter:
+        tasks=tasks.filter(employee_id=employee_id_filter)
+    if date_filter:
+        tasks=tasks.filter(InTime__startswith=date_filter)
+    paginator = PageNumberPagination()
+    # paginator.page_size = 10  # Set the number of items per page
+    paginator.page_size = int(request.GET.get('page_size', 10))
+
+    result_page = paginator.paginate_queryset(tasks, request)
+
+    serializer = StructuredLogSerializer(result_page, many=True)
+
+    return paginator.get_paginated_response(serializer.data)
+
+
 def insert_structed_log(device_id,employee_id,username,InTime):
     print("device_id :",device_id,"employee_id :",employee_id,"username :",username,"InTime :",InTime)
     group=GroupDevice.objects.filter(device_id=device_id).values_list("group_id",flat=True)
@@ -40,10 +75,7 @@ def insert_structed_log(device_id,employee_id,username,InTime):
             group_id=grp,
             employee_id=employee_id,
             username=username,
-            InTime=InTime,
-            OutTime=InTime,
-            total_work_minutes=0,
-            cumalative_work_minutes=0
+            InTime=InTime
         )
         data.save()
 
