@@ -23,6 +23,12 @@ urlpatterns = [
     path('shift/',include('shift_management.urls')),
     path('status/',include('device_status.urls')),
     path('structuedlog/',include('structuedlog.urls')),
+    path('archive_log/',include('archive_log.urls')),
+    path('employee_csv/',include('employee_csv.urls')),
+
+    
+
+    
 
 ]
 if settings.DEBUG:

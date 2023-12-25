@@ -101,7 +101,6 @@ def attendanceReport(request):
 			return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 	elif request.method == 'DELETE':
 				print("inside delete ")
-				delete_previous_log_data()
 				return Response({"message":"successfully deleted"})
 
 
@@ -127,7 +126,6 @@ def attendance_with_id(request,pk):
 				return Response(serializer.data)
 		elif request.method == 'DELETE':
 				print("inside delete ")
-				delete_previous_log_data()
 				# task.delete()
 				return Response({"message":"Log successfully deleted!"})
 		
@@ -164,46 +162,4 @@ def find_employee_data(request):
 	return Response(serializer.data)
 
 
-
-
-def delete_previous_log_data():
-	##delete attendance log
-	    #  {
-        #     "ID": 223,
-        #     "username": "rezvi",
-        #     "InTime": "2023-12-24T22:20:42+06:00",
-        #     "OutTime": "2023-12-24T22:20:42+06:00",
-        #     "total_work_minutes": 0,
-        #     "cumalative_work_minutes": 0,
-        #     "device_id": "DmcGate10",
-        #     "group_id": 2,
-        #     "employee_id": "1"
-        # }
-
-
-	six_months_ago = datetime.now() - timedelta(days=6 * 30)
-
-	# Filter logs older than 6 months
-	logs_to_delete = AttendanceReport.objects.filter(timestamp__lt=six_months_ago)
-
-	# Export to CSV
-	csv_filename = f'old_logs_till_{datetime.now()}_backup.csv'
-	with open(csv_filename, 'w', newline='') as csvfile:
-		fieldnames = ['ID', 'username', 'InTime','OutTime','total_work_minutes','cumalative_work_minutes','device_id','group_id','employee_id']  # Replace with actual field names
-		writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-
-		# Write CSV header
-		writer.writeheader()
-
-		# Write log data to CSV
-		for log in logs_to_delete:
-			writer.writerow({'ID':log.ID, 'username':log.username, 'InTime':Log.InTime,'OutTime':log.OutTime,'total_work_minutes':log.total_work_minutes,'cumalative_work_minutes':log.cumalative_work_minutes,'device_id':log.device_id,'group_id':log.group_id,'employee_id':log.employee_id})  # Replace with actual field values
-
-	# Delete logs
-	# logs_to_delete.delete()
-	path=str(MEDIA_DIR)+f'/{csv_filename}'
-	# Optionally, move the CSV file to a desired location
-	print("path :",path)
-	os.rename(csv_filename, path)
-       
 

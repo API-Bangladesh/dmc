@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     'syncInfo',
     'shift_management',
     'device_status',
+    'archive_log',
+    'employee_csv',
 ]
 
 MIDDLEWARE = [
