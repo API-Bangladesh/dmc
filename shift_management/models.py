@@ -18,3 +18,8 @@ class ShiftManagement(models.Model):
             self.total_time = end - beginning
         super().save(*args, **kwargs)
     
+
+
+class ShiftAssign(models.Model):
+    employee_id=models.ForeignKey("employee.Employee",on_delete=models.CASCADE)
+    shift_id=models.ForeignKey("shift_management.ShiftManagement",on_delete=models.CASCADE)

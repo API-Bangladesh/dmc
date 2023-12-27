@@ -3,8 +3,10 @@ from pydoc import stripid
 from django.shortcuts import render
 from django.conf import settings
 from rest_framework.response import Response
+
+from empgrp.models import Group
 from .serializers import EmployeeSerializer,TrainEmployeeFromCSVSerializer
-from .models import Employee
+from .models import Employee, EmployeeGroupDevice
 from rest_framework import status
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
@@ -33,6 +35,8 @@ from devices.check_device_status import is_device_active
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
 def employee(request):
+	employee_id_filter = request.GET.get('employee_id', None)
+
 	if request.method == 'GET':
 
 		tasks = Employee.objects.all().order_by('-employee_id')
@@ -43,6 +47,8 @@ def employee(request):
 		paginator = PageNumberPagination()
 		# paginator.page_size = 10  # Set the number of items per page
 		paginator.page_size = int(request.GET.get('page_size', 10))
+		if employee_id_filter:
+			tasks=tasks.filter(employee_id=employee_id_filter)
 
 		result_page = paginator.paginate_queryset(tasks, request)
 
@@ -384,7 +390,9 @@ def train_employee_with_image(data):
 	# active_status=devices= GroupDevice.objects.filter(group_id=data["group_id"]).values_list('active_status', flat=True)
 	devices= GroupDevice.objects.filter(group_id=data["group_id"]).values_list('device_id', flat=True)
 	train=[]
+	group_id=data["group_id"]
 	i=0
+	not_inserted_devices=[]
 	print("total devices :",devices.count())
 	for dev in devices:
 		print("i=",i)
@@ -396,6 +404,7 @@ def train_employee_with_image(data):
 		ip=DeviceLocalIP[0][0]
 		status=DeviceLocalIP[0][1]
 		flag=False
+		c=0
 		try:
 		
 			if status=="active" and is_device_active(ip):
@@ -410,6 +419,10 @@ def train_employee_with_image(data):
 				employee_add_info_url=f'http://{ip}/cgi-bin/recordUpdater.cgi?action=insert&name=AccessControlCard&CardName={username}&CardNo={cardno}&UserID={employee_id}&CardStatus=0&CardType=0&Password={password}&Doors[{0}]=0&VTOPosition=01018001&ValidDateStart={reg_date}%20093811&ValidDateEnd={valid_date}%20093811'
 				response=requests.get(employee_add_info_url,auth=HTTPDigestAuth('admin','admin123'))
 				print("response create employee:",response.url)
+				if response.status_code>=200 and response.status_code<299:
+					print("added info to device")
+				else:
+					c=c+1
 
 
 				###Dahua image add API
@@ -438,15 +451,35 @@ def train_employee_with_image(data):
 						response = requests.post(add_image_url,json=data,auth=HTTPDigestAuth('admin','admin123'),headers={"Content-Type":"application/json"})
 						print("response add image:",response.text)
 						print("response add image code:",response.status_code)
-						if response.status_code==200:
+						if response.status_code>=200 and response.status_code<=299:
 							flag=True
+						else:
+							c+=1
+							
 					train.append({"ip":ip,"status":status,"train":flag})
+					if c>0:
+						response.status_code.append(dev)
 					
 			else:
 				train.append({"ip":ip,"status":status,"train":False})
+				not_inserted_devices.append(dev)
+			if c>0:
+				employee_ins=Employee.objects.get(employee_id=employee_id)
+				group_ins=Group.objects.get(group_id=group_id)
+				dev_ins=Devices.objects.get(device_id=dev)
+
+				emp_dev_train=EmployeeGroupDevice(
+					employee_id=employee_ins,
+					device_id=dev_ins,
+					action="add"
+					
+					
+				)
+				emp_dev_train.save()
 		except ConnectionAbortedError as e:
 			print(e)
 	print("trained list :",train)
+	return not_inserted_devices
 
 
 
@@ -546,6 +579,7 @@ def delete_info(e_id):
 	devices=GroupDevice.objects.filter(group_id=data["group_id"]).values_list("device_id",flat=True)
 	for dev in devices:
 		print("dev : ",dev)
+		c=0
 
 		DeviceLocalIP=Devices.objects.filter(device_id =dev).values_list("device_ip","active_status",flat=False)
 		ip=DeviceLocalIP[0][0]
@@ -554,6 +588,7 @@ def delete_info(e_id):
 			find_employee_info_url=f"http://{ip}/cgi-bin/recordFinder.cgi?action=find&name=AccessControlCard&condition.UserID={data['employee_id']}&count={8000}"
 			resp=requests.get(find_employee_info_url,auth=HTTPDigestAuth('admin','admin123'))
 			print("response :",resp.text)
+
 			r=resp.text
 			r=r.replace("found=","")
 			print("num of rec found :",r)
@@ -576,6 +611,29 @@ def delete_info(e_id):
 				employee_delete_url=f"http://{DeviceLocalIP[0]}/cgi-bin/recordUpdater.cgi?action=remove&name=AccessControlCard&recno={RecordNumberFrom_Find_Employee_Info}"
 				response= requests.get(employee_delete_url,auth=HTTPDigestAuth('admin','admin123'))
 				print("delete response : ",response.text)
+			else:
+				# emp_dev_train=EmployeeGroupDevice(
+				# 	employee_id=data['employee_id'],
+				# 	group_id=data["group_id"],
+				# 	device_id=dev,
+				# 	action="delete"
+					
+					
+				# )
+				employee_ins=Employee.objects.get(employee_id=data['employee_id'])
+				group_ins=Group.objects.get(group_id=data["group_id"])
+				dev_ins=Devices.objects.get(device_id=dev)
+
+				emp_dev_train=EmployeeGroupDevice(
+					employee_id=employee_ins,
+					device_id=dev_ins,
+					action="delete"
+					
+					
+				)
+				emp_dev_train.save()
+				###this action("delete") should be addred in EmployeeGroupDevice table
+				print("this action=delete should be addred in EmployeeGroupDevice table")
 
 
 
@@ -623,7 +681,6 @@ def pagination():
 @permission_classes([IsAuthenticated])
 def get_employee_info_from_mis(request,pk):
 	id=pk
-
 	data={
     "employee_id": id,
     "last_login": None,

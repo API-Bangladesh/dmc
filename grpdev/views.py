@@ -1,4 +1,5 @@
 import base64
+from datetime import datetime, timedelta
 import os
 
 import requests
@@ -32,15 +33,19 @@ def empgrpdev(request):
         serializer=GroupDeviceSerializer(grpdev,many=True)
         return Response(serializer.data)
     if request.method == 'POST':
-        serializer=GroupDeviceSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            print(serializer.data)
-            # employee_list=Employee.objects.filter()
-            group_ins=Group.objects.filter(group_id=serializer.data["group_id"])
-            print("group_ins :",group_ins)
-            group_check=GroupDevice.objects.filter(group_id=group_ins[0]).first()
-            if group_check !=None:
+        is_exist=GroupDevice.objects.filter(device_id=request.data['device_id']).first()
+        # print("is_exist :",is_exist)
+        if is_exist==None:
+          serializer=GroupDeviceSerializer(data=request.data)
+        
+          if serializer.is_valid():
+              serializer.save()
+              print(serializer.data)
+              # employee_list=Employee.objects.filter()
+              group_ins=Group.objects.filter(group_id=serializer.data["group_id"])
+              print("group_ins :",group_ins)
+              group_check=GroupDevice.objects.filter(group_id=group_ins[0]).first()
+              if group_check !=None:
                 # device_list=GroupDevice.objects.filter(group_id=group_ins[0]).values_list("group_id","device_id",flat=False)
                 # print("device list :",device_list)
                 employee_list=Employee.objects.filter(group_id=group_ins[0])
@@ -71,9 +76,11 @@ def empgrpdev(request):
                 # print("employee_list :",employee_list)
 
 
-            return Response(serializer.data)
+              return Response(serializer.data)
+          else:
+              return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+             return Response({"message":"device already assigned!!!"})
 
 @api_view(['GET','POST','DELETE'])
 @authentication_classes([JWTAuthentication])
@@ -106,7 +113,8 @@ def train_employee_on_new_device(data,id):
 	print("E_ID :",data['employee_id'])
 	print("Name :",data["username"])
 	print("Surname",data["username"].replace(" ","_"))
-	# image_path = os.path.join(settings.MEDIA_ROOT, str(employee.employee_id), "image.jpg")
+	# image_path = os.path.join(settings.MEDIA_ROOT, str(employee.employee_id),
+	#  "image.jpg")
 	img=data["image"].replace("/media","")
 	# img=img.replace("/","\\")
 	# image_path = os.path.join(settings.MEDIA_ROOT,data['employee_id'],data["username"]+".jpg")
@@ -118,10 +126,11 @@ def train_employee_on_new_device(data,id):
 	print("inside train :",data)
 	print("register date : ",data['registration_date'])
 	print("validity_date :",data["validity_date"])
-	reg_date=data['registration_date']
-	reg_date=reg_date.replace("-","")
-	valid_date=data["validity_date"]
-	valid_date=valid_date.replace("-","")
+    
+	reg_date=datetime.now()
+	reg_date=reg_date.strftime("%Y%m%d")
+	valid_date=datetime.now()+timedelta(days=5*365)
+	valid_date=valid_date.strftime("%Y%m%d")
 	cardno=int(data["cardNo"])
 	username=data["username"]
 	employee_id=data["employee_id"]

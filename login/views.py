@@ -49,27 +49,27 @@ def login_user(request):
 
                 exp_timestamp = int(expiration_time_gmt6.timestamp())
 
-                dev=Devices.objects.all().order_by('-device_id')
-                print("devices data :",dev)
-                devserializer=DevicesSerializer(dev,many=True)
-                dev_datas=devserializer.data
-                dev_status=[]
-                print("count : ",len(dev_datas))
-                for i in range(len(dev_datas)):
-                    if dev_datas[0]["device_ip"]==None:
-                        dev_status.append({"device_id":dev_datas[i]["device_id"],"device_ip":"null","active_status":dev_datas[i]["active_status"],"present_active_status": "inactive"})
-                        continue
+                # dev=Devices.objects.all().order_by('-device_id')
+                # print("devices data :",dev)
+                # devserializer=DevicesSerializer(dev,many=True)
+                # dev_datas=devserializer.data
+                # dev_status=[]
+                # print("count : ",len(dev_datas))
+                # for i in range(len(dev_datas)):
+                #     if dev_datas[0]["device_ip"]==None:
+                #         dev_status.append({"device_id":dev_datas[i]["device_id"],"device_ip":"null","active_status":dev_datas[i]["active_status"],"present_active_status": "inactive"})
+                #         continue
 
-                    print(dev_datas[0]["device_id"])
-                    present_active_status= is_device_active(dev_datas[i]["device_ip"])
-                    present_active_status_str=""
-                    if present_active_status==True:
-                        present_active_status_str="active"
-                    else:
-                        present_active_status_str="inactive"
+                #     print(dev_datas[0]["device_id"])
+                #     present_active_status= is_device_active(dev_datas[i]["device_ip"])
+                #     present_active_status_str=""
+                #     if present_active_status==True:
+                #         present_active_status_str="active"
+                #     else:
+                #         present_active_status_str="inactive"
                     
-                    dev_status.append({"device_id":dev_datas[i]["device_id"],"device_ip":dev_datas[i]["device_ip"],"active_status":dev_datas[i]["active_status"],"present_active_status": present_active_status_str})
-                print("device_status",dev_status)
+                #     dev_status.append({"device_id":dev_datas[i]["device_id"],"device_ip":dev_datas[i]["device_ip"],"active_status":dev_datas[i]["active_status"],"present_active_status": present_active_status_str})
+                # print("device_status",dev_status)
 
 
                 body={
@@ -110,7 +110,6 @@ def login_user(request):
                         
                         'refresh':str(refresh),
                         'access':final_token,
-                        'device_status':dev_status,
                         'user': serializer.data,
                         }
                 )

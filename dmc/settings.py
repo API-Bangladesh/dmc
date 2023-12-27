@@ -51,6 +51,9 @@ INSTALLED_APPS = [
     'device_status',
     'archive_log',
     'employee_csv',
+    'shift_assign',
+    'dashboard',
+    'security',
 ]
 
 MIDDLEWARE = [

@@ -25,6 +25,13 @@ urlpatterns = [
     path('structuedlog/',include('structuedlog.urls')),
     path('archive_log/',include('archive_log.urls')),
     path('employee_csv/',include('employee_csv.urls')),
+    path('shift_assign/',include('shift_assign.urls')),
+    path('dashboard/',include('dashboard.urls')),
+    path('security/',include('security.urls')),
+    
+
+    
+    
 
     
 
