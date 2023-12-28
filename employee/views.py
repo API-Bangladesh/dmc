@@ -35,12 +35,13 @@ from devices.check_device_status import is_device_active
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
 def employee(request):
+	print("request :",request)
 	employee_id_filter = request.GET.get('employee_id', None)
 
 	if request.method == 'GET':
 
 		tasks = Employee.objects.all().order_by('-employee_id')
-		serializer = EmployeeSerializer(tasks, many=True)
+		serializer = EmployeeSerializer(tasks,many=True)
 		unique_field = int(timezone.now().timestamp() * 1000)  # Using milliseconds
 		print("unique_field :",unique_field)
 		# Apply pagination

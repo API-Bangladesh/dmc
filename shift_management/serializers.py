@@ -8,5 +8,5 @@ class ShiftManagementSerializer(serializers.ModelSerializer):
 
 class ShiftAssignSerializer(serializers.ModelSerializer):
     class Meta:
-        name=ShiftAssign
+        model=ShiftAssign
         fields='__all__'

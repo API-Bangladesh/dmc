@@ -16,7 +16,7 @@ import requests
 from attendance_report.views import insert_attendance_log
 from syncInfo.views import syncInfo
 
-from employee.models import Employee
+from employee.models import Employee, EmployeeGroupDevice
 from .serializers import LogSerializer
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 import re
@@ -304,7 +304,8 @@ def get_data_by_ip(did,start,end):
 
                     # Convert to the desired timezone (GMT+6)
                     gmt6_timezone = pytz.timezone('Asia/Dhaka')  # Replace with the appropriate timezone identifier
-                    gmt6_datetime = utc_datetime.astimezone(gmt6_timezone)
+                    gmt6_datetime = utc_datetime.astimezone(gmt6_timezone)-timedelta(hours=6)
+
                     
                     if employee_id !='\r':
                         exist=employee=Employee.objects.filter(employee_id=str(employee_id.rstrip('\r'))).first()
@@ -379,5 +380,10 @@ def auto_save():
 
             print("device id :",d["device_id"])
             get_data_by_ip(d["device_id"],start,end)
-
+            
+##check EmployeeGroupDevice is there is any entry
+def check_emp_group_device():
+    data=EmployeeGroupDevice.object.all().order_by('-id')
+    ###check if there is any entry in the database.If there is any entry,then get their info
+    
 

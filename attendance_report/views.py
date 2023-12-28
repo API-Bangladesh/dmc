@@ -40,7 +40,27 @@ def insert_attendance_log(device_id,employee_id,username,InTime):
 		grp=Group.objects.get(group_id=group_id[0][i])
 		print("staging log")
 		print("structured intime :",InTime)
-		# check_intime=AttendanceReport.objects.all()
+		check_db=AttendanceReport.objects.all()
+		if len(check_db)>0:
+			check_intime_last=AttendanceReport.objects.filter(employee_id=employee_id).values_list("InTime",flat=True).order_by("-InTime").last()
+			check_intime_first=AttendanceReport.objects.filter(employee_id=employee_id).values_list("InTime",flat=True).order_by("-InTime").first()
+
+			print("check_intime_last :",check_intime_last)
+			print("check_intime_first :",check_intime_first)
+
+
+			# Example usage:
+		if is_within_shift_time(InTime):
+			print("The time is within the specified range.")
+		else:
+			print("The time is outside the specified range.")
+			
+
+		
+
+
+	
+
 		
 		
 
@@ -54,9 +74,40 @@ def insert_attendance_log(device_id,employee_id,username,InTime):
 			total_work_minutes=0,
 			cumalative_work_minutes=0
 		)
+
+		# Save the instance
 		data.save()
 
 	return 
+
+
+
+def is_within_shift_time(check_time):
+	# Get today's date in the timezone of check_time
+	print("check_time :",check_time)
+
+	if not isinstance(check_time, datetime):
+		# Ensure that check_time is a datetime object
+		raise ValueError("check_time must be a datetime object")
+	today = timezone.now().date()
+
+	# Calculate datetime objects for 8 AM and 8 PM of the previous day
+	previous_day_8am = timezone.make_aware(datetime.combine(today - timedelta(days=1), datetime.min.time()) + timedelta(hours=8))
+	previous_day_8pm = timezone.make_aware(datetime.combine(today - timedelta(days=1), datetime.min.time()) + timedelta(hours=20))
+
+	# Calculate datetime objects for 8 AM and 8 PM of today
+	today_8am = timezone.make_aware(datetime.combine(today, datetime.min.time()) + timedelta(hours=8))
+	today_8pm = timezone.make_aware(datetime.combine(today, datetime.min.time()) + timedelta(hours=20))
+
+	# Check if the check_time is within the specified range
+	return previous_day_8am <= check_time < previous_day_8pm or today_8am <= check_time < today_8pm
+
+
+
+
+
+
+
 # Create your views here.
 @api_view(['GET','POST'])
 @authentication_classes([JWTAuthentication])
