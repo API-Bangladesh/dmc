@@ -1,6 +1,9 @@
 from datetime import datetime
 from django.db import models
 
+from department.models import Department
+from designation.models import Designation
+
 # Create your models here.
 class ShiftManagement(models.Model):
     shift_id=models.AutoField(primary_key=True)
@@ -22,4 +25,18 @@ class ShiftManagement(models.Model):
 
 class ShiftAssign(models.Model):
     employee_id=models.ForeignKey("employee.Employee",on_delete=models.CASCADE)
+    employee_name=models.CharField(max_length=100,null=True,blank=True)
     shift_id=models.ForeignKey("shift_management.ShiftManagement",on_delete=models.CASCADE)
+    shift_name = models.CharField(max_length=100, null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        # Fetch the corresponding Department and Designation instances
+        if self.shift_id_id:
+            shift_instance = ShiftManagement.objects.get(pk=self.shift_id_id)
+            self.shift_name = shift_instance.shift_name
+        if self.employee_id_id:
+            employee_instance = self.employee_id
+            self.employee_name = employee_instance.username   
+
+
+        super().save(*args, **kwargs)

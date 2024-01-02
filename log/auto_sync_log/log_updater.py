@@ -6,7 +6,6 @@ scheduler_running = False
 def start():
     scheduler = BackgroundScheduler()
     scheduler.add_job(auto_save,"interval", minutes=60,id="log_002",replace_existing=True)
-
     scheduler.start()
     global scheduler_running
 

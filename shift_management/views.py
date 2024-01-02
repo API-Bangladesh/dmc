@@ -35,8 +35,6 @@ def shiftManagement(request):
 @permission_classes([IsAuthenticated])
 def ShiftManagement_with_id(request,pk):
 	task1 = ShiftManagement.objects.filter(shift_id=pk).first()
-
-	
 	print("task : ",task1)
 	if task1!=None:
 		task = ShiftManagement.objects.get(shift_id=pk)
@@ -45,7 +43,7 @@ def ShiftManagement_with_id(request,pk):
 			return Response(serializer.data)
 
 		if request.method == 'POST':
-			serializer = ShiftManagementSerializer(instance=task, data=request.data)
+			serializer = ShiftManagementSerializer(instance=task, data=request.data,partial=True)
 			if serializer.is_valid():
 				serializer.save()
 				return Response(serializer.data)

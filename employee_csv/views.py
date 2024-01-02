@@ -98,11 +98,11 @@ def file_upload_view(request, format=None):
 
 					i+=1
 
-			return Response({'message': 'Upload successful'}, status=status.HTTP_201_CREATED)
+			return Response({'message': 'Upload successful','uploaded':True}, status=status.HTTP_201_CREATED)
 
-		return Response({'message': 'Invalid request'}, status=status.HTTP_400_BAD_REQUEST)
+		return Response({'message': 'Invalid request','uploaded':False}, status=status.HTTP_400_BAD_REQUEST)
 	else:
-		return Response({"message":"zip_file  and csv_file both name and file should be exist !!"})
+		return Response({"message":"zip_file  and csv_file both name and file should be exist !!",'uploaded':False})
 
 def train_employee(data):
 	print("E_ID :",data['employee_id'])

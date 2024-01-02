@@ -47,7 +47,7 @@ def assign_shift_with_id(request,pk):
             shiftSerializer=ShiftAssignSerializer(ShiftAssign,many=False)
             return Response(shiftSerializer.data,status=status.HTTP_201_CREATED)
         if request.method == 'POST':
-            shiftSerializer=ShiftAssignSerializer(instance=ShiftAssign,data=request.data)
+            shiftSerializer=ShiftAssignSerializer(data=request.data,partial=True)
             if shiftSerializer.is_valid():
                 shiftSerializer.save()
                 return Response(shiftSerializer.data,status=status.HTTP_201_CREATED)

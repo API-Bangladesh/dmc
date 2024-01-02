@@ -2,6 +2,8 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 from django.shortcuts import render
 import pytz
+from department.models import Department
+from designation.models import Designation
 from grpdev.models import GroupDevice
 from structuedlog.models import StructuredLog
 from structuedlog.serializers import StructuredLogSerializer
@@ -9,7 +11,7 @@ from empgrp.models import Group
 from employee.models import Employee
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
-
+from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.pagination import PageNumberPagination
 # Create your views here.
@@ -22,10 +24,28 @@ def structured_log(request):
     date_filter = request.GET.get('date', None)
     employee_id_filter = request.GET.get('employee_id', None)
     group_filter=request.GET.get('group_id', None)
+    department_filter=request.GET.get('department_id', None)
+    designation_filter=request.GET.get('designation_id', None)
 
 
     tasks = StructuredLog.objects.all().order_by('-ID')
 
+    # if dept_exist==None or desi_exist==None or grp_exist==None or emp_exist==None:
+    #         return Response({"message":"Data not found","results": []})
+    if department_filter:
+            print("department_filter :",department_filter)
+            
+            
+            # dept=Department.objects.get(id=department_filter)
+            # print("dept :",dept)
+            tasks=tasks.filter(department__in=department_filter)
+            
+    if designation_filter:
+            print("designation_filter :",designation_filter)
+
+            # desi=Designation.objects.get(id=designation_filter)
+            # print("desi :",desi)
+            tasks=tasks.filter(designation__in=designation_filter)
     if group_filter:
         tasks=tasks.filter(group_id=group_filter)
     if employee_id_filter:
@@ -43,7 +63,7 @@ def structured_log(request):
     return paginator.get_paginated_response(serializer.data)
 
 
-def insert_structed_log(device_id,employee_id,username,InTime):
+def insert_structed_log(device_id,employee_id,username,InTime,designation,department):
     print("device_id :",device_id,"employee_id :",employee_id,"username :",username,"InTime :",InTime)
     group=GroupDevice.objects.filter(device_id=device_id).values_list("group_id",flat=True)
     group_id=Employee.objects.filter(employee_id=employee_id).values_list("group_id")
@@ -75,7 +95,9 @@ def insert_structed_log(device_id,employee_id,username,InTime):
             group_id=grp,
             employee_id=employee_id,
             username=username,
-            InTime=InTime
+            InTime=InTime,
+            designation=designation,
+            department=department
         )
         data.save()
 

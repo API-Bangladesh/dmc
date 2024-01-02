@@ -5,6 +5,7 @@ from django.conf import settings
 from rest_framework.response import Response
 
 from empgrp.models import Group
+from shift_management.models import ShiftAssign, ShiftManagement
 from .serializers import EmployeeSerializer,TrainEmployeeFromCSVSerializer
 from .models import Employee, EmployeeGroupDevice
 from rest_framework import status
@@ -39,6 +40,8 @@ def employee(request):
 	employee_id_filter = request.GET.get('employee_id', None)
 
 	if request.method == 'GET':
+		# datas=EmployeeGroupDevice.objects.all().order_by('-id')
+		# print("datas :",datas)
 
 		tasks = Employee.objects.all().order_by('-employee_id')
 		serializer = EmployeeSerializer(tasks,many=True)
@@ -54,6 +57,7 @@ def employee(request):
 		result_page = paginator.paginate_queryset(tasks, request)
 
 		serializer = EmployeeSerializer(result_page, many=True)
+		
 
 		return paginator.get_paginated_response(serializer.data)
 
@@ -87,6 +91,17 @@ def employee(request):
 				train_employee(all_data)
 			elif all_data["group_id"] != None and all_data["image"]!=None:
 				train_employee_with_image(all_data)
+			print("employee_id :",all_data['employee_id']," ,shift_id :",all_data["shift_id"])
+			shift_id=ShiftManagement.objects.get(shift_id=all_data["shift_id"])
+			print("shift_id instance : ",shift_id)
+			emp_ins=Employee.objects.get(employee_id = all_data['employee_id'])
+
+			
+			shift_assign=ShiftAssign(employee_id=emp_ins,shift_id=shift_id)
+			shift_assign.save()
+			print("shift assigned !!!")
+
+
 
 
 			return Response(after_serialize.data, status=status.HTTP_201_CREATED)
@@ -459,7 +474,7 @@ def train_employee_with_image(data):
 							
 					train.append({"ip":ip,"status":status,"train":flag})
 					if c>0:
-						response.status_code.append(dev)
+						not_inserted_devices.append(dev)
 					
 			else:
 				train.append({"ip":ip,"status":status,"train":False})

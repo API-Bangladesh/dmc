@@ -6,9 +6,10 @@ from devices.check_device_status import is_device_active
 from devices.models import Devices
 from department.models import Department
 from designation.models import Designation
-from employee.models import Employee
+from employee.models import Employee, EmployeeGroupDevice
 from empgrp.models import Group
 from devices.models import Devices
+from employee.serializers import EmployeeGroupDeviceSerializer
 from grpdev.models import GroupDevice
 from shift_management.models import ShiftManagement
 
@@ -48,6 +49,13 @@ def dashboard_info(request):
             need_to_check_devices.append(str(device_id))
     shift=ShiftManagement.objects.all()
     total_shift=len(shift)
+    pending=EmployeeGroupDevice.objects.all()
+    serialize_data=[]
+    if len(pending)>0:
+        serialize=EmployeeGroupDeviceSerializer(pending,many=True)
+        serialize_data= serialize.data
+
+
     data.append(
         {
             "total_employee":total_employee,
@@ -58,6 +66,7 @@ def dashboard_info(request):
             "need_to_check_devices":need_to_check_devices,
             "total_group":total_group,
             "total_shift":total_shift,
+            "pending_add_list":serialize_data
         }
     )
     print("dashborad data :",data)

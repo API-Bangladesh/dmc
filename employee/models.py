@@ -132,11 +132,10 @@ class Employee(AbstractUser):
 class EmployeeGroupDevice(models.Model):
     id = models.AutoField(primary_key=True)
     employee_id = models.ForeignKey(Employee,on_delete=models.CASCADE,null=False)
-    # group_id = models.ForeignKey(Group,on_delete=models.CASCADE,null=False)
     device_id = models.ForeignKey(Devices,on_delete=models.CASCADE,null=False)
     action=models.CharField(max_length=100,null=False,default="-")
-    def __str__(self):
-        return self.id
+    job_start_date=models.DateTimeField(max_length=100,null=True,auto_now_add=True)
+
 
 
 

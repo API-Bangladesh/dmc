@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Employee,TrainEmployeeFromCSV
+from .models import Employee, EmployeeGroupDevice,TrainEmployeeFromCSV
 
 class EmployeeSerializer(serializers.ModelSerializer):
     # image_url = serializers.SerializerMethodField()
@@ -27,3 +27,7 @@ class TrainEmployeeFromCSVSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = TrainEmployeeFromCSV
 		fields="__all__"
+class EmployeeGroupDeviceSerializer(serializers.ModelSerializer):
+      class Meta:
+            model= EmployeeGroupDevice
+            fields='__all__'

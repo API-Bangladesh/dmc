@@ -14,6 +14,10 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 import requests
 from attendance_report.views import insert_attendance_log
+from department.models import Department
+from designation.models import Designation
+from employee.serializers import EmployeeGroupDeviceSerializer
+from employee.views import delete_info, train_employee_with_image
 from syncInfo.views import syncInfo
 
 from employee.models import Employee, EmployeeGroupDevice
@@ -39,20 +43,37 @@ def raw_log(request):
     date_filter = request.GET.get('date', None)
     employee_id_filter = request.GET.get('employee_id', None)
     group_filter=request.GET.get('group_id', None)
-
-    if request.method == 'GET':
-        tasks = Log.objects.all().order_by('-r_clsf_record_id')
-        if group_filter:
-            grp=Group.objects.get(group_id=group_filter)
-            devices_by_group=GroupDevice.objects.filter(group_id=group_filter).values_list('device_id', flat=True)
-            print(devices_by_group)
+    department_filter=request.GET.get('department_id', None)
+    designation_filter=request.GET.get('designation_id', None)
 
 
-            tasks=tasks.filter(device_id__in=devices_by_group)
-        if employee_id_filter:
-            tasks=tasks.filter(employee_id=employee_id_filter)
-        if date_filter:
-            tasks=tasks.filter(InTime__startswith=date_filter)
+    
+    tasks = Log.objects.all().order_by('-r_clsf_record_id')
+    # dept_exist=Department.objects.filter(id=department_filter).first()
+    # desi_exist=Designation.objects.filter(id=designation_filter).first()
+    # grp_exist=GroupDevice.objects.filter(group_id=group_filter).first()
+    # emp_exist=Employee.objects.filter(employee_id=employee_id_filter).first()
+
+    # if dept_exist==None or desi_exist==None or grp_exist==None or emp_exist==None:
+    #     return Response({"message":"Data not found","results": []})
+    if date_filter:
+        tasks=tasks.filter(InTime__startswith=date_filter)
+    if department_filter:
+        print("department_filter :",department_filter)
+        
+        tasks=tasks.filter(department__in=department_filter)
+        
+    if designation_filter:
+        print("designation_filter :",designation_filter)
+        tasks=tasks.filter(designation__in=designation_filter)
+    if group_filter:
+        grp=Group.objects.get(group_id=group_filter)
+        devices_by_group=GroupDevice.objects.filter(group_id=group_filter).values_list('device_id', flat=True)
+        print(devices_by_group)
+        tasks=tasks.filter(device_id__in=devices_by_group)
+    if employee_id_filter:
+        tasks=tasks.filter(employee_id=employee_id_filter)
+
     paginator = PageNumberPagination()
     # paginator.page_size = 10  # Set the number of items per page
     paginator.page_size = int(request.GET.get('page_size', 10))
@@ -311,6 +332,13 @@ def get_data_by_ip(did,start,end):
                         exist=employee=Employee.objects.filter(employee_id=str(employee_id.rstrip('\r'))).first()
                         if exist!=None:
                             employee=Employee.objects.get(employee_id=str(employee_id.rstrip('\r')))
+                            employee_desig_depart=Employee.objects.filter(employee_id=str(employee_id.rstrip('\r'))).values_list("department","designation",flat=False)
+                            print("employee_desig_depart : ",employee_desig_depart)
+                            print("dersignation :",employee_desig_depart[0][1],",department :",employee_desig_depart[0][0])
+                            department_ins=Department.objects.get(id=employee_desig_depart[0][0])
+                            designation_ins=Designation.objects.get(id=employee_desig_depart[0][1])
+
+
                             # device_id=Device.objects.filter(device_ip=ip).values_list("device_id",flat=True)
                             info={
                                 "device_id":did,
@@ -339,13 +367,16 @@ def get_data_by_ip(did,start,end):
                                     Status=int(Status.rstrip('\r')),
                                     Type=Type.rstrip('\r'),
                                     image_url=image_url.rstrip('\r'),
-                                    employee_id=employee
+                                    employee_id=employee,
+                                    department=department_ins,
+                                    designation=designation_ins
+
                                     )
                                 
                                 ins.save()
                                 print("saved")
-                                insert_structed_log(device_id=devi,employee_id=employee,username=CardName.rstrip('\r'),InTime=gmt6_datetime.replace(tzinfo=timezone.utc))
-                                insert_attendance_log(device_id=devi,employee_id=employee,username=CardName.rstrip('\r'),InTime=gmt6_datetime.replace(tzinfo=timezone.utc))
+                                insert_structed_log(device_id=devi,employee_id=employee,username=CardName.rstrip('\r'),InTime=gmt6_datetime.replace(tzinfo=timezone.utc),designation=designation_ins,department=department_ins)
+                                insert_attendance_log(device_id=devi,employee_id=employee,username=CardName.rstrip('\r'),InTime=gmt6_datetime.replace(tzinfo=timezone.utc),designation=designation_ins,department=department_ins)
             
                             else:
                                 # insert_attendance_log(device_id=devi,employee_id=employee,username=CardName,InTime=gmt6_datetime.replace(tzinfo=timezone.utc))
@@ -380,10 +411,59 @@ def auto_save():
 
             print("device id :",d["device_id"])
             get_data_by_ip(d["device_id"],start,end)
+            # check_emp_group_device()
             
 ##check EmployeeGroupDevice is there is any entry
 def check_emp_group_device():
-    data=EmployeeGroupDevice.object.all().order_by('-id')
+    datas=EmployeeGroupDevice.objects.all()
+    print("datas :")
+    print(len(datas))
+    
+    if len(datas)>0:
+        for i in range(len(datas)):
+            print("data :")
+            print(datas[i])
+
+            
+            if datas[i]:
+                serializer=EmployeeGroupDeviceSerializer(datas[i],many=False)
+                data=serializer.data
+                print("data :",data)
+                print("job start date :",data["job_start_date"])
+                datetime_obj = datetime.strptime(data["job_start_date"], "%Y-%m-%dT%H:%M:%S.%f%z")
+                differ=datetime.now(datetime_obj.tzinfo)-datetime_obj
+                device_ip=Devices.objects.filter(device_id=data["device_id"]).values_list("device_ip",flat=True)
+                if is_device_active(device_ip[0]) and data["action"] =="add":
+                    employee_info=Employee.objects.get(employee_id=data["employee_id"])
+
+                    train_employee_with_image(employee_info)
+                    del_row=EmployeeGroupDevice.objects.filter(employee_id=data["employee_id"])
+                    del_row.delete()
+                if  is_device_active(device_ip[0]) and data["action"]=="delete":
+                    emp_id=Employee.objects.filter(employee_id=data["employee_id"]).values_list("employee_id",flat=True)
+                    delete_info(emp_id[0])
+                    del_row=EmployeeGroupDevice.objects.filter(employee_id=data["employee_id"])
+                    del_row.delete()
+
+                if is_device_active(device_ip[0]) and differ.days> 10:
+                    del_row=EmployeeGroupDevice.objects.filter(employee_id=data["employee_id"])
+                    del_row.delete()
+
+
+
+
+
+
+
+
+
+
+    #check  "action" colummn,
+    #if "action"=="add":
+    
+    #ping the device_id ,if the device is active ,then do as per action column  into the device
+    ##if the device not active or not able to ping and job_start_date > 10 days then,delete the job
+    # data.delete()
     ###check if there is any entry in the database.If there is any entry,then get their info
     
 
