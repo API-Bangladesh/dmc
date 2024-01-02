@@ -54,47 +54,62 @@ def file_upload_view(request, format=None):
 						image_filename = f'employee_images/{employee_id}.jpg'
 						print("employeeimage name :",image_filename)
 						if image_filename in z.namelist():
-							image_data = z.read(image_filename)
-							# print("image data:",image_data)
-							base64_encoded = base64.b64encode(image_data).decode('utf-8')
-							# print("base64 img:",base64_encoded)
-							print("employee info :",employee_data)
-											# Save the image to the model's ImageField
-							
-							instance = Employee()
-							instance.employee_id = employee_id # Set other model fields as needed
-							instance.username=employee_data[1]
-							instance.email=employee_data[2]
-							instance.password=make_password(employee_data[3])
-							instance.phone_number=employee_data[4]
-							shift_ins=ShiftManagement.objects.filter(shift_id=employee_data[5])
-							instance.shift_id=shift_ins[0]
-							group_ins=Group.objects.filter(group_id=employee_data[6])
-							instance.group_id=group_ins[0]
-							# Save the image to the model's ImageField
-							instance.image.save(employee_data[1]+".jpg", ContentFile(image_data), save=True)
-							path_link = instance.image.url
-							print("Path Link:", path_link)
-							# Optionally, encode image to base64
-							base64_encoded = base64.b64encode(image_data).decode('utf-8')
-							print("Base64 encoded image:", base64_encoded)
-							# Set other model fields based on employee_data
-							
-							instance.save()
-							reg_date=datetime.now()
-							valid_date=datetime.now() + timedelta(days=5*365)
-							
-							data={
-								'group_id':employee_data[6],
-								'username':employee_data[1],
-								'cardNo':int(reg_date.timestamp()*1000),
-								'employee_id':employee_id,
-								'password':employee_data[3],
-								'reg_date':reg_date,
-								'valid_date':valid_date,
-								'image':path_link
-								}
-							train_employee(data)
+							try:
+								image_data = z.read(image_filename)
+								# print("image data:",image_data)
+								base64_encoded = base64.b64encode(image_data).decode('utf-8')
+								# print("base64 img:",base64_encoded)
+								print("employee info :",employee_data)
+												# Save the image to the model's ImageField
+								
+								instance = Employee()
+								instance.employee_id = employee_id # Set other model fields as needed
+								instance.username=employee_data[1]
+								instance.email=employee_data[2]
+								instance.password=make_password(employee_data[3])
+								instance.phone_number=employee_data[4]
+								check_shift=ShiftManagement.objects.filter(shift_id=employee_data[5]).first()
+								if check_shift==None:
+									return Response({"message":"shift does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+								
+								shift_ins=ShiftManagement.objects.filter(shift_id=employee_data[5])
+								
+								instance.shift_id=shift_ins[0]
+								check_group=Group.objects.filter(group_id=employee_data[6]).first()
+								if check_group==None:
+									return Response({"message":"shift does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+
+								group_ins=Group.objects.filter(group_id=employee_data[6])
+								instance.group_id=group_ins[0]
+								# Save the image to the model's ImageField
+								instance.image.save(employee_data[1]+".jpg", ContentFile(image_data), save=True)
+								path_link = instance.image.url
+								print("Path Link:", path_link)
+								# Optionally, encode image to base64
+								base64_encoded = base64.b64encode(image_data).decode('utf-8')
+								print("Base64 encoded image:", base64_encoded)
+								# Set other model fields based on employee_data
+								
+								instance.save()
+								reg_date=datetime.now()
+								valid_date=datetime.now() + timedelta(days=5*365)
+								
+								data={
+									'group_id':employee_data[6],
+									'username':employee_data[1],
+									'cardNo':int(reg_date.timestamp()*1000),
+									'employee_id':employee_id,
+									'password':employee_data[3],
+									'reg_date':reg_date,
+									'valid_date':valid_date,
+									'image':path_link
+									}
+								train_employee(data)
+								print("data :",data)
+							except KeyError as e:
+								return  Response({'message': 'Please recheck your file info.group id ,shift id,designation id,department id should be in the database','uploaded':False}, status=status.HTTP_400_BAD_REQUEST)
+						else:
+							return  Response({'message': 'Zip image name ,should be user id and csv employee_id and zip image name should be same ','uploaded':False}, status=status.HTTP_400_BAD_REQUEST)
 
 					i+=1
 

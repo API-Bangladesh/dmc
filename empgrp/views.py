@@ -1,4 +1,6 @@
 from django.shortcuts import render
+
+from grpdev.models import GroupDevice
 from .models import Group
 from .serializers import GroupSerializer
 from rest_framework import status
@@ -50,6 +52,10 @@ def group_with_id(request,pk):
             else:
                 return Response(desSerializer.error,status=status.HTTP_400_BAD_REQUEST)
         if request.method == 'DELETE':
+            check_grp=GroupDevice.objects.filter(group_id=dev).first()
+            if check_grp!=None:
+                return Response({"message":"group can not be deleted ,it is assigned with device table!"},status=status.HTTP_400_BAD_REQUEST)
+
             dev.delete()
             return Response({"message":"Group successfully deleted!"})
     else:

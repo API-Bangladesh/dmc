@@ -93,106 +93,161 @@ def insert_attendance_log(device_id,employee_id,username,InTime,designation,depa
 
 
 		info=[]
+		info_date=datetime.now()
 		if is_employee_exist!=None:
 			attendance_info=AttendanceReport.objects.filter(employee_id=employee_id).last()
 			print("shift info :",attendance_info)
 			print("outitme :",attendance_info.OutTime)
 			serialize=AttendanceSerializer(attendance_info,many=False)
 			info=serialize.data
-		info_date = datetime.fromisoformat(info["InTime"])
+			info_date = datetime.fromisoformat(info["InTime"])
+			
+			print("serialized data :",info)
+			print("InTime :",info["InTime"])
+		
+		
+		
+		# info_date_out = datetime.fromisoformat(info["OutTime"])
+
 		# Convert InTime string to a datetime object with the same format
 		in_time = InTime
+		if is_employee_exist==None:
+			in_flag=1
+		elif is_employee_exist!=None and info_date.date() != info_date.date():
+			if shift_id[0]==6:
+				out_flag=1
+			else:
+				in_flag=1
+			
+		elif is_employee_exist!=None and info_date.date() == info_date.date():
+			out_flag=1
+
+
+
+
+
+
+			# if is_between_6_to_11(InTime):
+			# 	if shift_id[0]==4:
+			# 		in_flag=1
+			# 	elif shift_id[0]==6:
+			# 		out_flag=1
+			# 	else:
+			# 		in_flag=1
+
+			# # elif is_between_1101_to_1700(InTime):
+			# # 	if shift_id[0]==4:
+			# # 		out_flag=1
+			# # 	elif shift_id[0]==5:
+			# # 		in_flag=1
+			# # 	else:
+			# # 		in_flag=1
+			# elif is_between_1701_to_2200(InTime):
+			# 	if shift_id[0]==5:
+			# 		out_flag=1
+			# 	elif shift_id[0]==6:
+			# 		in_flag=1
+			# 	else:
+			# 		in_flag=1
+
+				
+
+
+
+
+
+		
 		
 			
 
 
-		if shift_id[0]==4:
-			in_flag=1
+		# if shift_id[0]==4:
+		# 	in_flag=1
 
-			if is_between_6_to_11(InTime) and is_employee_exist==None :
-				in_flag=1
-			# 	data = AttendanceReport(
-			# 	device_id=device_id,
-			# 	group_id=grp,
-			# 	employee_id=employee_id,
-			# 	username=username,
-			# 	InTime=InTime,
-			# 	OutTime=dt,
-			# 	total_work_minutes=0,
-			# 	cumalative_work_minutes=0,
-			# 	designation=designation,
-			# 	department=department
-			# )
-			# 	print("Intime :",InTime)
-			elif is_between_6_to_11(InTime) and is_employee_exist!=None and info_date.date() == in_time.date():
-				out_flag=1
+		# 	if is_between_6_to_11(InTime) and is_employee_exist==None :
+		# 		in_flag=1
+		# 	# 	data = AttendanceReport(
+		# 	# 	device_id=device_id,
+		# 	# 	group_id=grp,
+		# 	# 	employee_id=employee_id,
+		# 	# 	username=username,
+		# 	# 	InTime=InTime,
+		# 	# 	OutTime=dt,
+		# 	# 	total_work_minutes=0,
+		# 	# 	cumalative_work_minutes=0,
+		# 	# 	designation=designation,
+		# 	# 	department=department
+		# 	# )
+		# 	# 	print("Intime :",InTime)
+		# 	elif is_between_6_to_11(InTime) and is_employee_exist!=None and info_date.date() == in_time.date():
+		# 		out_flag=1
 				
-				# shift_info=AttendanceReport.objects.get(employee_id=employee_id)
-				# serializer=AttendanceSerializer(shift_info,many=False)
-				# serializer.data["OutTime"]=InTime
-				# serializer.save()
-				# # serializer = AttendanceSerializer(shift_info, data=request.data)
-				# if serializer.is_valid():
-				# 	# Update the validated data with the 'OutTime' value
-				# 	serializer.validated_data["OutTime"] = InTime
+		# 		# shift_info=AttendanceReport.objects.get(employee_id=employee_id)
+		# 		# serializer=AttendanceSerializer(shift_info,many=False)
+		# 		# serializer.data["OutTime"]=InTime
+		# 		# serializer.save()
+		# 		# # serializer = AttendanceSerializer(shift_info, data=request.data)
+		# 		# if serializer.is_valid():
+		# 		# 	# Update the validated data with the 'OutTime' value
+		# 		# 	serializer.validated_data["OutTime"] = InTime
 
-				# 	# Save the serializer instance
-				# 	serializer.save()
-
-
-				# print("outtime :",InTime)
+		# 		# 	# Save the serializer instance
+		# 		# 	serializer.save()
 
 
-
-			print("shift :1")
-		elif shift_id[0]==5:
-			if is_between_1101_to_1700(InTime) and is_employee_exist==None :
-
-				in_flag=1
-			# 	data = AttendanceReport(
-			# 	device_id=device_id,
-			# 	group_id=grp,
-			# 	employee_id=employee_id,
-			# 	username=username,
-			# 	InTime=InTime,
-			# 	OutTime=dt,
-			# 	total_work_minutes=0,
-			# 	cumalative_work_minutes=0,
-			# 	designation=designation,
-			# 	department=department
-			# )
-			# 	print("Intime :",InTime)
-			elif is_between_1101_to_1700(InTime) and is_employee_exist!=None and info_date.date() == in_time.date():
-				out_flag=1
-				# shift_info=AttendanceReport.objects.get(employee_id=employee_id)
-				# serializer=AttendanceSerializer(shift_info,many=False)
-				# serializer.data["OutTime"]=InTime
-				# serializer.save()
-				# # serializer = AttendanceSerializer(shift_info, data=request.data)
-				# if serializer.is_valid():
-				# 	# Update the validated data with the 'OutTime' value
-				# 	serializer.validated_data["OutTime"] = InTime
-
-				# 	# Save the serializer instance
-				# 	serializer.save()
+		# 		# print("outtime :",InTime)
 
 
-				# print("outtime :",InTime)
 
-			print("shift :2")
-		elif shift_id[0]==6:
-			if is_between_1701_to_2200(InTime)  and is_employee_exist==None :
-				in_flag=1
-				print("Intime :",InTime)
-			elif is_between_1701_to_2200(InTime)  and is_employee_exist!=None and info_date.date() == in_time.date():
-				out_flag=1
-				print("outtime :",InTime)
+		# 	print("shift :1")
+		# elif shift_id[0]==5:
+		# 	if is_between_1101_to_1700(InTime) and is_employee_exist==None :
 
-			print("shift :3")
-		if is_employee_exist==None:
-				in_flag=1
-		elif is_employee_exist!=None and info_date.date==InTime.date:
-				out_flag=1
+		# 		in_flag=1
+		# 	# 	data = AttendanceReport(
+		# 	# 	device_id=device_id,
+		# 	# 	group_id=grp,
+		# 	# 	employee_id=employee_id,
+		# 	# 	username=username,
+		# 	# 	InTime=InTime,
+		# 	# 	OutTime=dt,
+		# 	# 	total_work_minutes=0,
+		# 	# 	cumalative_work_minutes=0,
+		# 	# 	designation=designation,
+		# 	# 	department=department
+		# 	# )
+		# 	# 	print("Intime :",InTime)
+		# 	elif is_between_1101_to_1700(InTime) and is_employee_exist!=None and info_date.date() == in_time.date():
+		# 		out_flag=1
+		# 		# shift_info=AttendanceReport.objects.get(employee_id=employee_id)
+		# 		# serializer=AttendanceSerializer(shift_info,many=False)
+		# 		# serializer.data["OutTime"]=InTime
+		# 		# serializer.save()
+		# 		# # serializer = AttendanceSerializer(shift_info, data=request.data)
+		# 		# if serializer.is_valid():
+		# 		# 	# Update the validated data with the 'OutTime' value
+		# 		# 	serializer.validated_data["OutTime"] = InTime
+
+		# 		# 	# Save the serializer instance
+		# 		# 	serializer.save()
+
+
+		# 		# print("outtime :",InTime)
+
+		# 	print("shift :2")
+		# elif shift_id[0]==6:
+		# 	if is_between_1701_to_2200(InTime)  and is_employee_exist==None :
+		# 		in_flag=1
+		# 		print("Intime :",InTime)
+		# 	elif is_between_1701_to_2200(InTime)  and is_employee_exist!=None and info_date.date() == in_time.date():
+		# 		out_flag=1
+		# 		print("outtime :",InTime)
+
+		# 	print("shift :3")
+		# if is_employee_exist==None:
+		# 		in_flag=1
+		# elif is_employee_exist!=None and info_date.date==InTime.date:
+		# 		out_flag=1
 		if in_flag==1:
 			
 				data = AttendanceReport(
@@ -210,7 +265,7 @@ def insert_attendance_log(device_id,employee_id,username,InTime,designation,depa
 				data.save()
 				print("Intime :",InTime)
 		if out_flag==1:
-				attendance_info=AttendanceReport.objects.get(employee_id=employee_id)
+				attendance_info=AttendanceReport.objects.filter(employee_id=employee_id).last()
 				print("shift info :",attendance_info)
 				print("outitme :",attendance_info.OutTime)
 				serialize=AttendanceSerializer(attendance_info,many=False)

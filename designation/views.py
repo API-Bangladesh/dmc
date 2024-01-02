@@ -2,6 +2,8 @@ from django.shortcuts import render
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+
+from employee.models import Employee
 from .models import Designation
 from .serializers import DesignationSerializer 
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
@@ -55,6 +57,10 @@ def designation_with_id(request,pk):
                 return Response(desSerializer.error,status=status.HTTP_400_BAD_REQUEST)
         if request.method == 'DELETE':
             print("delete designation :",designation)
+            check_desi=Employee.objects.filter(designation_id=designation).first()
+            if check_desi!=None:
+                return Response({"message":"designation can not be deleted ,it is assigned with employees table!"},status=status.HTTP_400_BAD_REQUEST)
+
             designation.delete()
             return Response({"message":"designation successfully deleted!"})
     else:

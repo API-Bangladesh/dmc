@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from devices.check_device_status import is_device_active
+from grpdev.models import GroupDevice
 from .models import Devices
 from .serializers import DevicesSerializer 
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
@@ -59,6 +60,10 @@ def devices_with_id(request,pk):
                 return Response(desSerializer.error,status=status.HTTP_400_BAD_REQUEST)
         if request.method == 'DELETE':
             print("devices delete :",dev)
+            check_aasign=GroupDevice.objects.filter(device_id=dev).first()
+            if check_aasign!=None:
+                return Response({"message":"device can not be until device removed from group by device table!"},status=status.HTTP_400_BAD_REQUEST)
+
             dev.delete()
             return Response({"message":"devices successfully deleted!"})
     else:

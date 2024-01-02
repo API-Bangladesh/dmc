@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .serializers import ShiftManagementSerializer
-from .models import ShiftManagement
+from .models import ShiftAssign, ShiftManagement
 from rest_framework import status
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -48,6 +48,10 @@ def ShiftManagement_with_id(request,pk):
 				serializer.save()
 				return Response(serializer.data)
 		elif request.method == 'DELETE':
+				check_shift=ShiftAssign.objects.filter(shift_id=task).first()
+				if check_shift!=None:
+					return Response({"message":"shift can not be deleted ,it is assigned with employee table!"},status=status.HTTP_400_BAD_REQUEST)
+					
 				task.delete()
 				return Response({"message":"ShiftManagement successfully deleted!"})
 		

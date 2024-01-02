@@ -3,6 +3,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from devices.models import Devices
+from employee.models import Employee
 from .serializers import DepartmentSerializer
 from .models import Department
 from rest_framework import status
@@ -58,8 +59,12 @@ def department_with_id(request,pk):
 				serializer.save()
 				return Response(serializer.data)
 		elif request.method == 'DELETE':
-				task.delete()
-				return Response({"message":"department successfully deleted!"})
+			check_depart=Employee.objects.filter(department_id=task).first()
+			if check_depart!=None:
+				return Response({"message":"department can not be deleted ,it is assigned with employees table!"},status=status.HTTP_400_BAD_REQUEST)
+
+			task.delete()
+			return Response({"message":"department successfully deleted!"})
 		
 	else:
 		return Response({"message":"department id is not valid"})

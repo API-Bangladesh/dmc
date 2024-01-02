@@ -331,6 +331,7 @@ def get_data_by_ip(did,start,end):
                     if employee_id !='\r':
                         exist=employee=Employee.objects.filter(employee_id=str(employee_id.rstrip('\r'))).first()
                         if exist!=None:
+                            print("employee_id :",str(employee_id.rstrip('\r')))
                             employee=Employee.objects.get(employee_id=str(employee_id.rstrip('\r')))
                             employee_desig_depart=Employee.objects.filter(employee_id=str(employee_id.rstrip('\r'))).values_list("department","designation",flat=False)
                             print("employee_desig_depart : ",employee_desig_depart)

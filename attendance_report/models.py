@@ -6,6 +6,8 @@ from designation.models import Designation
 from log.models import Log
 from shift_management.models import ShiftAssign
 
+def get_default_date():
+    return datetime.now().date()
 # Create your models here.
 class AttendanceReport(models.Model):
 	ID=models.AutoField(primary_key=True)
@@ -22,6 +24,7 @@ class AttendanceReport(models.Model):
 	designation=models.ForeignKey("designation.Designation",on_delete=models.CASCADE,null=True)
 	department_name = models.CharField(max_length=100, null=True, blank=True)
 	designation_name = models.CharField(max_length=100, null=True, blank=True)
+	date=models.DateField(null=True,default=get_default_date)
 	def save(self, *args, **kwargs):
 		# Fetch the corresponding Department and Designation instances
 		if self.department_id:
