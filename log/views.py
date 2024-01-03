@@ -301,18 +301,23 @@ def get_data_by_ip(did,start,end):
                 if current_record:
                     records.append(current_record)
                 # print("records :",records)
-
                 
+
+                total_length=len(records)
+                total_log_table=Log.objects.all()
+                if len(total_log_table)>0:
+                    Log.objects.all().update(last_synced=False)
+
                 for index in range(len(records)):
-                    
-                    CardName=records[index]['CardName']
-                    InTime=records[index]['CreateTime']
-                    RecNo=records[index]['RecNo']
-                    RoomNumber=records[index]['RoomNumber']
-                    Status=records[index]['Status']
-                    Type=records[index]['Type']
-                    image_url=records[index]['URL']
-                    employee_id = records[index]['UserID']
+                    print("index :",index)
+                    CardName=records[total_length-index-1]['CardName']
+                    InTime=records[total_length-index-1]['CreateTime']
+                    RecNo=records[total_length-index-1]['RecNo']
+                    RoomNumber=records[total_length-index-1]['RoomNumber']
+                    Status=records[total_length-index-1]['Status']
+                    Type=records[total_length-index-1]['Type']
+                    image_url=records[total_length-index-1]['URL']
+                    employee_id = records[total_length-index-1]['UserID']
                     devi=Devices.objects.get(device_id=did)
                     # employee=Employee.objects.get(employee_id=employee_id)
                     # intime=datetime.utcfromtimestamp(int(InTime.rstrip('\r')))
@@ -370,14 +375,15 @@ def get_data_by_ip(did,start,end):
                                     image_url=image_url.rstrip('\r'),
                                     employee_id=employee,
                                     department=department_ins,
-                                    designation=designation_ins
+                                    designation=designation_ins,
+                                    last_synced=True
 
                                     )
                                 
                                 ins.save()
                                 print("saved")
                                 insert_structed_log(device_id=devi,employee_id=employee,username=CardName.rstrip('\r'),InTime=gmt6_datetime.replace(tzinfo=timezone.utc),designation=designation_ins,department=department_ins)
-                                insert_attendance_log(device_id=devi,employee_id=employee,username=CardName.rstrip('\r'),InTime=gmt6_datetime.replace(tzinfo=timezone.utc),designation=designation_ins,department=department_ins)
+                                # insert_attendance_log(device_id=devi,employee_id=employee,username=CardName.rstrip('\r'),InTime=gmt6_datetime.replace(tzinfo=timezone.utc),designation=designation_ins,department=department_ins)
             
                             else:
                                 # insert_attendance_log(device_id=devi,employee_id=employee,username=CardName,InTime=gmt6_datetime.replace(tzinfo=timezone.utc))
@@ -386,6 +392,15 @@ def get_data_by_ip(did,start,end):
 
                                 print("data already synced")
                             datas.append(info)
+                print("length : ",len(records))
+                check_records=Log.objects.all().order_by("r_clsf_record_id")
+                # insert_attendance_log(count=(total_length-1))
+
+
+                # for i in range(len(records)):
+                #     print("")
+                    
+
             else:
                 dev_info={did:False}
             

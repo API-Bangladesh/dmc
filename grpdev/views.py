@@ -33,7 +33,7 @@ def empgrpdev(request):
         serializer=GroupDeviceSerializer(grpdev,many=True)
         return Response(serializer.data)
     if request.method == 'POST':
-        is_exist=GroupDevice.objects.filter(group_id=request.data['group_id']).first()
+        is_exist=GroupDevice.objects.filter(group_id=request.data['group_id'], device_id=request.data["device_id"]).first()
         # print("is_exist :",is_exist)
         if is_exist==None:
           serializer=GroupDeviceSerializer(data=request.data)

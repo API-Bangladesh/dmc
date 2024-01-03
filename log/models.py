@@ -19,6 +19,7 @@ class Log(models.Model):
 	designation=models.ForeignKey("designation.Designation",on_delete=models.CASCADE,null=True)
 	department_name = models.CharField(max_length=100, null=True, blank=True)
 	designation_name = models.CharField(max_length=100, null=True, blank=True)
+	last_synced=models.BooleanField(null=True,default=False)
 	def save(self, *args, **kwargs):
 		# Fetch the corresponding Department and Designation instances
 		if self.department_id:

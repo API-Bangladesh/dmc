@@ -119,7 +119,7 @@ def insert_attendance_log(device_id,employee_id,username,InTime,designation,depa
 			else:
 				in_flag=1
 			
-		elif is_employee_exist!=None and info_date.date() == info_date.date():
+		elif is_employee_exist!=None and info_date.date() == info_date.date() :
 			out_flag=1
 
 
