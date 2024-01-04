@@ -99,9 +99,13 @@ def log_with_minutes(request,pk):
     print("loged in employee :",employee_id_found[0])
     last_sync_time=SyncInfoTable.objects.all().order_by("-id")[:1]
     last_sync_time_serializer=SyncInfoTableSerializer(last_sync_time,many=True)
+    dt=datetime.now()
+    if len(last_sync_time_serializer.data)>0:
 
-    print("last sync info :",last_sync_time_serializer.data[0]['syncTime'])
-    dt=last_sync_time_serializer.data[0]['syncTime']
+        print("last sync info :",last_sync_time_serializer.data[0]['syncTime'])
+        dt=last_sync_time_serializer.data[0]['syncTime']
+
+        
     stime = datetime.now() - timedelta(minutes=pk)
     # stime = datetime.strptime(stime, "%Y-%m-%d %H:%M:%S")
 
@@ -165,9 +169,16 @@ def log(request):
         print("loged in employee :",employee_id_found[0])
         last_sync_time=SyncInfoTable.objects.all().order_by("-id")[:1]
         last_sync_time_serializer=SyncInfoTableSerializer(last_sync_time,many=True)
+        dt=datetime.now()
+        if len(last_sync_time_serializer.data)>0:
 
-        print("last sync info :",last_sync_time_serializer.data[0]['syncTime'])
-        dt=last_sync_time_serializer.data[0]['syncTime']
+            print("last sync info :",last_sync_time_serializer.data[0]['syncTime'])
+            dt=last_sync_time_serializer.data[0]['syncTime']
+        
+            
+
+        # print("last sync info :",last_sync_time_serializer.data[0]['syncTime'])
+        # dt=last_sync_time_serializer.data[0]['syncTime']
         stime = datetime.strptime(dt, "%Y-%m-%d %H:%M:%S") - timedelta(hours=6)
         # stime = datetime.strptime(stime, "%Y-%m-%d %H:%M:%S")
 
@@ -465,6 +476,7 @@ def get_data_by_ip(did,start,end):
                         department_name=Department.objects.filter(id=group_desig_depart_ins[0][2]).values_list("department",flat=True)
 
                         username=Employee.objects.filter(employee_id=employee_id).values_list("username",flat=True)
+
 
 
                         
