@@ -10,8 +10,8 @@ from rest_framework.permissions import IsAuthenticated
 # Create your views here.
 
 @api_view(['GET','POST'])
-@authentication_classes([JWTAuthentication])
-@permission_classes([IsAuthenticated])
+# @authentication_classes([JWTAuthentication])
+# @permission_classes([IsAuthenticated])
 def assign_shift(request):
     if request.method == 'GET':
         shiftAssign=ShiftAssign.objects.all().order_by('-id')
@@ -21,16 +21,16 @@ def assign_shift(request):
     if request.method == 'POST':
         print("Data :",request.data)
         shift=request.data["employee_id"]
-        is_exist=ShiftAssign.objects.filter(employee_id=shift).first()
-        if is_exist==None:
-            shiftSerializer=ShiftAssignSerializer(data=request.data)
-            if shiftSerializer.is_valid():
-                shiftSerializer.save()
-                return Response(shiftSerializer.data,status=status.HTTP_201_CREATED)
-            else:
-                return Response(shiftSerializer.errors,status=status.HTTP_400_BAD_REQUEST)
+        # is_exist=ShiftAssign.objects.filter(employee_id=shift).first()
+        # if is_exist==None:
+        shiftSerializer=ShiftAssignSerializer(data=request.data)
+        if shiftSerializer.is_valid():
+            shiftSerializer.save()
+            return Response(shiftSerializer.data,status=status.HTTP_201_CREATED)
         else:
-            return Response({"message":"Shift already exist !!"})
+            return Response(shiftSerializer.errors,status=status.HTTP_400_BAD_REQUEST)
+        # else:
+        #     return Response({"message":"Shift already exist !!"})
     
     return
 

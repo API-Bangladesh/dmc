@@ -13,7 +13,8 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 import requests
-from attendance_report.views import insert_attendance_log
+from attendance_report.models import AttendanceReport
+from attendance_report.views import attendance_create, insert_attendance_log
 from department.models import Department
 from designation.models import Designation
 from employee.serializers import EmployeeGroupDeviceSerializer
@@ -36,6 +37,9 @@ from devices.check_device_status import is_device_active
 from rest_framework.pagination import PageNumberPagination
 from grpdev.models import GroupDevice
 from empgrp.models import Group
+from django.db.models import Min, Max
+
+
 @api_view(['GET'])
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
@@ -364,6 +368,10 @@ def get_data_by_ip(did,start,end):
                                 # gmt6_timezone = pytz.timezone("GMT+6")
                                 # in_time_gmt6 = datetime(2023, 11, 26, 11, 41, 20, tzinfo=gmt6_timezone)
                                 print("log InTime :",gmt6_datetime.replace(tzinfo=timezone.utc))
+                                InTime=gmt6_datetime.replace(tzinfo=timezone.utc),
+                                print("InTime: ",InTime[0].replace(tzinfo=None))
+                                in_t=InTime[0].replace(tzinfo=None)
+
                                 ins=Log(
                                     device_id=devi,
                                     CardName=CardName.rstrip('\r'),
@@ -376,14 +384,15 @@ def get_data_by_ip(did,start,end):
                                     employee_id=employee,
                                     department=department_ins,
                                     designation=designation_ins,
-                                    last_synced=True
+                                    last_synced=True,
+                                    logdate=in_t.date()
 
                                     )
                                 
                                 ins.save()
                                 print("saved")
                                 insert_structed_log(device_id=devi,employee_id=employee,username=CardName.rstrip('\r'),InTime=gmt6_datetime.replace(tzinfo=timezone.utc),designation=designation_ins,department=department_ins)
-                                # insert_attendance_log(device_id=devi,employee_id=employee,username=CardName.rstrip('\r'),InTime=gmt6_datetime.replace(tzinfo=timezone.utc),designation=designation_ins,department=department_ins)
+                                # insert_attendance_log(device_id=devi,employee_id=employee,username=CardName.rstrip('\r'),InTime=gmt6_datetime.replace(tzinfo=timezone.utc),designation=designation_ins,department=department_ins,count=100)
             
                             else:
                                 # insert_attendance_log(device_id=devi,employee_id=employee,username=CardName,InTime=gmt6_datetime.replace(tzinfo=timezone.utc))
@@ -394,7 +403,112 @@ def get_data_by_ip(did,start,end):
                             datas.append(info)
                 print("length : ",len(records))
                 check_records=Log.objects.all().order_by("r_clsf_record_id")
-                # insert_attendance_log(count=(total_length-1))
+                serialize=LogSerializer(check_records,many=True)
+                
+                serialize=LogSerializer(check_records,many=True)
+
+                total=(total_length-1)
+                st=datetime.utcfromtimestamp(start).date()
+                ed=datetime.utcfromtimestamp(end).date()
+                current_date = st
+                while current_date <= ed:
+                    # Perform operations with 'current_date'
+                    print(current_date)  # Example: Print the current date
+                    
+                    # Increment the current_date by one day for the next iteration
+                    current_date += timedelta(days=1)
+
+
+
+
+                    # Assuming log_date is the specific date for which you want to find check-in and check-out times
+
+                     # Query to find first check-in time for each employee on the specific logdate
+                    first_check_ins = Log.objects.filter(logdate=current_date).values('employee_id').annotate(first_check_in=Min('InTime'))
+
+                    # Query to find last check-out time for each employee on the specific logdate
+                    last_check_outs = Log.objects.filter(logdate=current_date).values('employee_id').annotate(last_check_out=Max('InTime'))
+                    device_id=Log.objects.filter(logdate=current_date).values_list("device_id").first()
+
+                    # Iterate through results to print first check-in and last check-out times for each employee
+                    for employee_check_in in first_check_ins:
+                        employee_id = employee_check_in['employee_id']
+                        first_check_in_time = employee_check_in['first_check_in']
+                        
+                        # Fetch the last check-out time for the same employee on the specific logdate
+                        last_check_out_time = next((check_out['last_check_out'] for check_out in last_check_outs if check_out['employee_id'] == employee_id), None)
+                        
+                        print(f"Employee ID: {employee_id}, First check-in time: {first_check_in_time}, Last check-out time: {last_check_out_time}")
+                        
+                        # device_id =
+                        # group_id=
+                        # employee_id=
+                        # username =
+                        # InTime=
+                        # OutTime=
+                        # delay_minutes = 
+                        # total_work_minutes=
+                        # cumalative_work_minutes=
+                        # department=
+                        # designation=
+                        # department_name = 
+                        # designation_name =
+                        # date=
+                        employee_ins=Employee.objects.get(employee_id=employee_id)
+                        print("device_id :",device_id)
+                        device_ins=Devices.objects.get(device_id=device_id[0])
+                        group_desig_depart_ins=Employee.objects.filter(employee_id=employee_id).values_list("group_id","designation","department",flat=False)
+                        group_id=Group.objects.get(group_id=group_desig_depart_ins[0][0])
+                        designation=Designation.objects.get(id=group_desig_depart_ins[0][1])
+                        department=Department.objects.get(id=group_desig_depart_ins[0][2])
+                        designation_name=Designation.objects.filter(id=group_desig_depart_ins[0][1]).values_list("designation",flat=True)
+                        department_name=Department.objects.filter(id=group_desig_depart_ins[0][2]).values_list("department",flat=True)
+
+                        username=Employee.objects.filter(employee_id=employee_id).values_list("username",flat=True)
+
+
+                        
+                        attendance=AttendanceReport(
+                        device_id =device_ins,
+                        group_id=group_id,
+                        employee_id=employee_ins,
+                        username =username,
+                        InTime=first_check_in_time,
+                        OutTime=last_check_out_time,
+                        delay_minutes = 0,
+                        total_work_minutes=0,
+                        cumalative_work_minutes=0,
+                        department=department,
+                        designation=designation,
+                        department_name =department_name,
+                        designation_name = designation_name,
+                        date=current_date
+
+                        )
+                        attendance.save()
+                        # device_id = models.ForeignKey("devices.Devices",on_delete=models.CASCADE)
+                        # CardName = models.CharField(max_length=100,default="-",null=True)
+                        # InTime=models.DateTimeField(null=True)
+                        # RecNo=models.IntegerField(default=0,null=True)
+                        # RoomNumber=models.CharField(default="-",null=True,max_length=100)
+                        # Status=models.IntegerField(default=0,null=True)
+                        # Type=models.CharField(default="-",null=True,max_length=100)
+                        # image_url=models.CharField(max_length=100,default="-",null=True)
+                        # employee_id=models.ForeignKey("employee.Employee",on_delete=models.CASCADE,null=True)
+                        # department=models.ForeignKey("department.Department",on_delete=models.CASCADE,null=True)
+                        # designation=models.ForeignKey("designation.Designation",on_delete=models.CASCADE,null=True)
+                        # department_name = models.CharField(max_length=100, null=True, blank=True)
+                        # designation_name = models.CharField(max_length=100, null=True, blank=True)
+                        # last_synced=models.BooleanField(null=True,default=False)
+                        # logdate = models.DateField(null=True, default=timezone.now)
+
+
+                # insert_attendance_log(count=total)
+                # attendance_create(total)
+
+
+
+
 
 
                 # for i in range(len(records)):

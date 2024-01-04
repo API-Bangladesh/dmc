@@ -33,8 +33,8 @@ from devices.check_device_status import is_device_active
 # Create your views here.
 
 @api_view(['GET','POST'])
-@authentication_classes([JWTAuthentication])
-@permission_classes([IsAuthenticated])
+# @authentication_classes([JWTAuthentication])
+# @permission_classes([IsAuthenticated])
 def employee(request):
 	print("request :",request)
 	employee_id_filter = request.GET.get('employee_id', None)
@@ -68,6 +68,7 @@ def employee(request):
 		serializer = EmployeeSerializer(data=request.data)
 
 		if serializer.is_valid():
+			print("serializer group :",request.data["group_id"])
 
 			serializer.save()
 

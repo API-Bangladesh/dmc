@@ -13,8 +13,8 @@ from rest_framework.permissions import IsAuthenticated
 
 # Create your views here.
 @api_view(['GET','POST'])
-@authentication_classes([JWTAuthentication])
-@permission_classes([IsAuthenticated])
+# @authentication_classes([JWTAuthentication])
+# @permission_classes([IsAuthenticated])
 def department(request):
 	if request.method == 'GET':
 		tasks = Department.objects.all().order_by('-id')

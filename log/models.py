@@ -1,5 +1,6 @@
+from datetime import datetime
 from django.db import models
-
+from django.utils import timezone
 from department.models import Department
 from designation.models import Designation
 
@@ -20,6 +21,8 @@ class Log(models.Model):
 	department_name = models.CharField(max_length=100, null=True, blank=True)
 	designation_name = models.CharField(max_length=100, null=True, blank=True)
 	last_synced=models.BooleanField(null=True,default=False)
+	logdate = models.DateField(null=True, default=timezone.now)
+
 	def save(self, *args, **kwargs):
 		# Fetch the corresponding Department and Designation instances
 		if self.department_id:

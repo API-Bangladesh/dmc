@@ -25,8 +25,8 @@ from empgrp.serializers import GroupSerializer
 from requests.auth import HTTPDigestAuth
 # Create your views here.
 @api_view(['GET','POST'])
-@authentication_classes([JWTAuthentication])
-@permission_classes([IsAuthenticated])
+# @authentication_classes([JWTAuthentication])
+# @permission_classes([IsAuthenticated])
 def empgrpdev(request):
     grpdev = GroupDevice.objects.all().order_by('-id')
     if request.method =='GET':

@@ -7,12 +7,12 @@ from designation.models import Designation
 
 from empgrp.models import Group
 from devices.models import Devices
-from empgrp.models import Group
 from shift_management.models import ShiftManagement 
 from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.contrib.auth.hashers import make_password
 from PIL import Image
 import os
+from django.core.exceptions import ObjectDoesNotExist
 def get_default_date():
     return datetime.now().date() + timedelta(days=5*365)
 
@@ -96,6 +96,7 @@ class Employee(AbstractUser):
     department_name = models.CharField(max_length=100, null=True, blank=True)
     designation_name = models.CharField(max_length=100, null=True, blank=True)
     shift_name = models.CharField(max_length=100, null=True, blank=True)
+    group_name = models.CharField(max_length=100,null=True,default="-")
     def save(self, *args, **kwargs):
         # Fetch the corresponding Department and Designation instances
         if self.department_id:
@@ -108,9 +109,20 @@ class Employee(AbstractUser):
         if self.shift_id_id:
             shift_instance = ShiftManagement.objects.get(pk=self.shift_id_id)
             self.shift_name = shift_instance.shift_name
-        # if self.shift_id_id:
-        #     shift_instance = get_object_or_404(ShiftManagement, pk=self.shift_id_id)
-        #     self.shift_name = shift_instance.shift_name
+
+        if self.group_id_id:
+            print("group_id:", self.group_id_id)
+            try:
+                group_instance = Group.objects.get(pk=self.group_id_id)
+                print("group_instance.group_name:", group_instance.group_name)
+                self.group_name = group_instance.group_name
+            except ObjectDoesNotExist:
+                # Handle the case when the Group does not exist for the provided group_id_id
+                # For example, set a default value or handle the situation based on your logic
+                self.group_name = "-"  # Set a default group name or handle accordingly
+
+
+
 
         super().save(*args, **kwargs)
 

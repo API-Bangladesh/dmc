@@ -13,8 +13,8 @@ from rest_framework.permissions import IsAuthenticated
 # Create your views here.
 
 @api_view(['GET','POST'])
-@authentication_classes([JWTAuthentication])
-@permission_classes([IsAuthenticated])
+# @authentication_classes([JWTAuthentication])
+# @permission_classes([IsAuthenticated])
 def devices(request):
     if request.method == 'GET':
         dev=Devices.objects.all().order_by('-device_id')
