@@ -96,7 +96,11 @@ class Employee(AbstractUser):
     department_name = models.CharField(max_length=100, null=True, blank=True)
     designation_name = models.CharField(max_length=100, null=True, blank=True)
     shift_name = models.CharField(max_length=100, null=True, blank=True)
-    group_name = models.CharField(max_length=100,null=True,default="-")
+    group_name=models.CharField(max_length=100,null=False,default="-")
+
+
+    def __str__(self):
+        return self.employee_id
     def save(self, *args, **kwargs):
         # Fetch the corresponding Department and Designation instances
         if self.department_id:
@@ -109,12 +113,10 @@ class Employee(AbstractUser):
         if self.shift_id_id:
             shift_instance = ShiftManagement.objects.get(pk=self.shift_id_id)
             self.shift_name = shift_instance.shift_name
-
         if self.group_id_id:
             print("group_id:", self.group_id_id)
             try:
                 group_instance = Group.objects.get(pk=self.group_id_id)
-                print("group_instance.group_name:", group_instance.group_name)
                 self.group_name = group_instance.group_name
             except ObjectDoesNotExist:
                 # Handle the case when the Group does not exist for the provided group_id_id
@@ -137,8 +139,7 @@ class Employee(AbstractUser):
     def set_password(self, password):
         # Hash the raw password using make_password
         self.password = make_password(password)
-    def __str__(self):
-        return self.employee_id
+
     
     
 class EmployeeGroupDevice(models.Model):

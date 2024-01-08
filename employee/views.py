@@ -83,7 +83,14 @@ def employee(request):
 			# Set the hashed password for the specific Employee instance
 			print("Saved Data:", serializer.data)
 			all_data=serializer.data
+			
+			group_name=Group.objects.filter(group_id=request.data["group_id"]).values_list("group_name",flat=False)
+			employee.group_name=group_name[0][0]
 			after_serialize=EmployeeSerializer(employee)
+
+
+
+
 
 			##this portion should be uncomment during employee adding into the device	
 			print("all data :",all_data)		
@@ -622,10 +629,10 @@ def delete_info(e_id):
 			
 			if n>0:
 			### RecordNumberFrom_Find_Employee_Info should be retrieve from 'resp.text'
-				RecordNumberFrom_Find_Employee_Info=int(get_record_number(DeviceLocalIP[0],data['employee_id'])) #for testing ,suppose RecordNumberFrom_Find_Employee_Info=45
+				RecordNumberFrom_Find_Employee_Info=int(get_record_number(ip,data['employee_id'])) #for testing ,suppose RecordNumberFrom_Find_Employee_Info=45
+				
 
-
-				employee_delete_url=f"http://{DeviceLocalIP[0]}/cgi-bin/recordUpdater.cgi?action=remove&name=AccessControlCard&recno={RecordNumberFrom_Find_Employee_Info}"
+				employee_delete_url=f"http://{ip}/cgi-bin/recordUpdater.cgi?action=remove&name=AccessControlCard&recno={RecordNumberFrom_Find_Employee_Info}"
 				response= requests.get(employee_delete_url,auth=HTTPDigestAuth('admin','admin123'))
 				print("delete response : ",response.text)
 			else:
