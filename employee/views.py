@@ -387,6 +387,7 @@ def train_employee(data):
 
 
 def train_employee_with_image(data):
+	print("data for training :",data)
 	print("E_ID :",data['employee_id'])
 	print("Name :",data["username"])
 	print("Surname",data["username"].replace(" ","_"))
@@ -427,6 +428,7 @@ def train_employee_with_image(data):
 		
 		ip=DeviceLocalIP[0][0]
 		status=DeviceLocalIP[0][1]
+		print("found ip :",ip," and status :",status)
 		flag=False
 		c=0
 		try:
@@ -456,7 +458,7 @@ def train_employee_with_image(data):
 					im=image.read()
 					# print("img :",im)
 					base64_img=base64.b64encode(im)
-					# print("image base64 : ",base64_img.decode("utf-8"))
+					print("image base64 : ",base64_img.decode("utf-8"))
 					add_image_url=f"http://{ip}/cgi-bin/FaceInfoManager.cgi?action=add"
 					data={
 						"UserID":employee_id,
@@ -487,6 +489,7 @@ def train_employee_with_image(data):
 			else:
 				train.append({"ip":ip,"status":status,"train":False})
 				not_inserted_devices.append(dev)
+				c+=1
 			if c>0:
 				employee_ins=Employee.objects.get(employee_id=employee_id)
 				group_ins=Group.objects.get(group_id=group_id)

@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'shift_assign',
     'dashboard',
     'security',
+    'employee_list_add',
 ]
 
 MIDDLEWARE = [

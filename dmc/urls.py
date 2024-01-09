@@ -28,6 +28,8 @@ urlpatterns = [
     path('shift_assign/',include('shift_assign.urls')),
     path('dashboard/',include('dashboard.urls')),
     path('security/',include('security.urls')),
+    path('employee_list_add/',include('employee_list_add.urls')),
+    
     
 
     

@@ -16,6 +16,8 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.contrib.auth.hashers import make_password
 from django.utils import timezone
 from datetime import datetime, timedelta
+from department.models import Department
+from designation.models import Designation
 from devices.check_device_status import is_device_active
 from devices.models import Devices
 from dmc import settings
@@ -81,6 +83,25 @@ def file_upload_view(request, format=None):
 
 								group_ins=Group.objects.filter(group_id=employee_data[6])
 								instance.group_id=group_ins[0]
+								check_designation=Designation.objects.filter(id=employee_data[7]).first()
+								if check_designation==None:
+									return Response({"message":"designation does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+								
+								if check_department==None:
+									return Response({"message":"department does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+								
+
+								
+
+
+
+								check_department=Department.objects.filter(id=employee_data[8]).first()
+
+
+								
+
+
+
 								# Save the image to the model's ImageField
 								instance.image.save(employee_data[1]+".jpg", ContentFile(image_data), save=True)
 								path_link = instance.image.url
